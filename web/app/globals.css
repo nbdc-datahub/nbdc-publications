@@ -13,8 +13,11 @@
   --card: #ffffff;
   --card-glass: rgba(255, 255, 255, 0.72);
   --border: #e6e8ec;
-  --accent: #6366f1; /* indigo-500 */
+  --accent: #6366f1; /* indigo-500 — fills and chart marks */
   --accent-2: #8b5cf6; /* violet-500 */
+  /* Text-weight accent. --accent itself is only 3.7:1 on white, which fails WCAG AA for
+     body-size link text, so links use this darker step instead. */
+  --link: #4338ca; /* indigo-700 — 8.6:1 on white */
   --ring: rgba(99, 102, 241, 0.4);
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
   /* Chart-only tokens, read by Plotly through getComputedStyle (spec §5). */
@@ -31,6 +34,7 @@
   --border: #232732;
   --accent: #818cf8; /* indigo-400 */
   --accent-2: #a78bfa; /* violet-400 */
+  --link: #a5b4fc; /* indigo-300 — 9.4:1 on the dark surface */
   --ring: rgba(129, 140, 248, 0.45);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.45);
   --chart-unselected: #3f4655;
@@ -45,6 +49,7 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
+  --color-link: var(--link);
   /* Self-hosted Geist (next/font/local via the `geist` package) — no runtime CDN. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
@@ -139,14 +144,18 @@ body::before {
    pointer events so both handles stay grabbable, and both stay keyboard-operable. */
 .range-dual {
   position: relative;
-  height: 1.75rem;
+  /* Tall enough that the 1.5rem (24px) thumbs meet the WCAG 2.2 target-size minimum. */
+  height: 2rem;
 }
+/* The input box itself is the 24px hit target (WCAG 2.2 target-size is measured on the
+   element, not on the ::-webkit-slider-thumb pseudo-element). The thin visible track is
+   drawn separately by .range-track / .range-fill underneath. */
 .range-dual input[type='range'] {
   position: absolute;
   inset-inline: 0;
-  top: 0.5rem;
+  top: 0.125rem;
   width: 100%;
-  height: 0.25rem;
+  height: 1.5rem;
   margin: 0;
   appearance: none;
   background: transparent;
@@ -155,19 +164,19 @@ body::before {
 .range-dual input[type='range']::-webkit-slider-thumb {
   appearance: none;
   pointer-events: auto;
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 9999px;
   background: var(--accent);
-  border: 2px solid var(--background);
+  border: 3px solid var(--background);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
 .range-dual input[type='range']::-moz-range-thumb {
   pointer-events: auto;
-  width: 1.05rem;
-  height: 1.05rem;
-  border: 2px solid var(--background);
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--background);
   border-radius: 9999px;
   background: var(--accent);
   cursor: pointer;
@@ -180,7 +189,7 @@ body::before {
 }
 .range-track {
   position: absolute;
-  top: 0.5rem;
+  top: 0.75rem;
   height: 0.25rem;
   width: 100%;
   border-radius: 9999px;
@@ -188,7 +197,7 @@ body::before {
 }
 .range-fill {
   position: absolute;
-  top: 0.5rem;
+  top: 0.75rem;
   height: 0.25rem;
   border-radius: 9999px;
   background: linear-gradient(100deg, var(--accent), var(--accent-2));

@@ -34,7 +34,7 @@ export default function About() {
             href="https://abcdstudy.org/"
             target="_blank"
             rel="noreferrer"
-            className="focus-ring text-accent underline underline-offset-2"
+            className="focus-ring text-link underline underline-offset-2"
           >
             Adolescent Brain Cognitive Development (ABCD) Study
           </a>
@@ -83,7 +83,7 @@ export default function About() {
           <a
             href={DOCUMENTATION_PATH}
             download
-            className="focus-ring text-accent underline underline-offset-2"
+            className="focus-ring text-link underline underline-offset-2"
           >
             data documentation PDF
           </a>{' '}
@@ -93,7 +93,7 @@ export default function About() {
 
       <Link
         href="/"
-        className="focus-ring inline-block text-sm text-accent underline underline-offset-2"
+        className="focus-ring inline-block text-sm text-link underline underline-offset-2"
       >
         ← Back to the catalog
       </Link>

@@ -136,7 +136,7 @@ export function DownloadPanel({
           {selectedCount.toLocaleString()} row{selectedCount === 1 ? '' : 's'} selected{' '}
           <button
             type="button"
-            className="focus-ring text-accent underline underline-offset-2"
+            className="focus-ring text-link underline underline-offset-2"
             onClick={onClearSelection}
           >
             Clear selections

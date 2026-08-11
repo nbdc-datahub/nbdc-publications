@@ -19,19 +19,14 @@ export const Plot = dynamic(() => import('./PlotlyChart'), {
 
 import type { Config } from 'plotly.js';
 
-/** Keep "download as PNG"; drop the zoom/lasso clutter these charts do not need. */
+// The mode bar is off entirely. Its buttons are focusable, and the plot subtree is marked
+// aria-hidden (the text summary below is the accessible version) — a focusable element inside
+// aria-hidden is a keyboard trap for screen-reader users. The charts need no zoom or pan, and
+// the underlying numbers are downloadable as CSV.
 export const PLOT_CONFIG: Partial<Config> = {
   displaylogo: false,
   responsive: true,
-  modeBarButtonsToRemove: [
-    'select2d',
-    'lasso2d',
-    'zoomIn2d',
-    'zoomOut2d',
-    'autoScale2d',
-    'pan2d',
-    'zoom2d',
-  ],
+  displayModeBar: false,
 };
 
 export function ChartCard({
@@ -50,7 +45,9 @@ export function ChartCard({
 }) {
   return (
     <section className="glass-card rounded-xl p-5" aria-label={title}>
-      <h3 className="text-center text-base font-semibold">{title}</h3>
+      {/* h2, not h3: the page's only h1 is the site title, so a chart heading at h3 would
+          skip a level. */}
+      <h2 className="text-center text-base font-semibold">{title}</h2>
       {subtitle ? <p className="text-center text-xs text-muted">{subtitle}</p> : null}
       {empty ? (
         <p className="flex h-[400px] items-center justify-center text-sm text-muted">

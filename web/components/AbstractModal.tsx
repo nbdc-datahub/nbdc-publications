@@ -75,7 +75,7 @@ export function AbstractModal({
               href={view.url}
               target="_blank"
               rel="noreferrer"
-              className="focus-ring text-sm text-accent underline underline-offset-2"
+              className="focus-ring text-sm text-link underline underline-offset-2"
             >
               Open publication ↗
             </a>

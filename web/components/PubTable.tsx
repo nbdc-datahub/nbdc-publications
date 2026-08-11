@@ -63,7 +63,7 @@ export function PubTable({
             href={row.original.url}
             target="_blank"
             rel="noreferrer"
-            className="focus-ring text-accent underline underline-offset-2"
+            className="focus-ring text-link underline underline-offset-2"
           >
             {row.original.title}
           </a>

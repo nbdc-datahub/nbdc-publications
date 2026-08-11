@@ -273,7 +273,7 @@ Responsive: filter rail collapses to a disclosure panel below `md`; charts stack
 
 | Concern | Choice | Note |
 |---------|--------|------|
-| Framework | Next.js 15 App Router, `output: 'export'` | Same as abcd-ror |
+| Framework | Next.js 16 App Router, `output: 'export'` | abcd-ror is on 15; same config |
 | UI | React 19, TypeScript strict | |
 | Styling | Tailwind CSS v4 | tokens copied from abcd-ror |
 | Charts | `plotly.js-basic-dist-min` + `react-plotly.js/factory` | loaded via `next/dynamic`, `ssr: false` |
@@ -287,10 +287,9 @@ Responsive: filter rail collapses to a disclosure panel below `md`; charts stack
 then on. The `.rds` itself is **not committed** (`*.rds` is git-ignored) — `data/portfolio.csv`
 is the committed source of truth; `legacy/app_MAIN.R` is kept for provenance.
 
-Pinned at Next 15.5.23. It carries 3 high advisories through bundled `postcss` and optional
-`sharp`; both are build-time only and unreachable here (static export, `images.unoptimized`
-means the image optimizer that pulls in `sharp` never runs, and the CSS fed to postcss is
-ours). Tracked as Plans 6.4, not treated as live exposure.
+Next 16. Next 15.5.23 carried 3 high advisories via bundled `postcss` and optional `sharp`;
+the bump clears them (`npm audit --prefix web` reports 0). The static-export config is
+unchanged across the major version.
 
 ---
 

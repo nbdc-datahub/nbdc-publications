@@ -17,7 +17,7 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-4">
-          <Link href="/about/" className="focus-ring text-sm text-muted hover:text-accent">
+          <Link href="/about/" className="focus-ring text-sm text-muted hover:text-link">
             About
           </Link>
           <ThemeToggle />
