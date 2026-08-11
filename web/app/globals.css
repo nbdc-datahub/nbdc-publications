@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Dark mode driven by next-themes (class strategy). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scaffold-only baseline. The full abcd-ror design-token port lands in Plans task 2.1. */
+:root {
+  --background: #ffffff;
+  --foreground: #0b0c0f;
+}
+
+.dark {
+  --background: #08090c;
+  --foreground: #f3f4f6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

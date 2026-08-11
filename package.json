@@ -1,0 +1,22 @@
+{
+  "name": "abcd-publications-root",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Root tooling for abcd-publications: data-prep pipeline, tests, lint. The web app lives in web/.",
+  "scripts": {
+    "prep": "tsx scripts/prep.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/node": "^20.14.0",
+    "happy-dom": "^20.11.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}
