@@ -39,7 +39,10 @@ export function AbstractModal({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="glass-card m-auto max-h-[80vh] w-[min(46rem,92vw)] rounded-xl p-0 text-foreground backdrop:bg-black/50"
+      // Deliberately NOT .glass-card. A translucent, blurred surface let the charts and
+      // filter rail show through the abstract text and made it hard to read; a modal is one
+      // of the few places the design system's glass has to give way to a solid fill.
+      className="m-auto max-h-[80vh] w-[min(52rem,92vw)] rounded-xl border border-border bg-card p-0 text-foreground shadow-(--shadow) backdrop:bg-black/70"
     >
       {view ? (
         <div className="flex max-h-[80vh] flex-col">

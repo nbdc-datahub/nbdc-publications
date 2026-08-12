@@ -4,7 +4,7 @@ Created: 2026-08-11
 Spec: [spec.md](spec.md) (product contract; precedence `spec.md` > `Plans.md`)
 
 Goal: replace the Shiny app at <https://abcd-study.shinyapps.io/abcd-publications/> with a
-static Next.js site on GitHub Pages at `https://nbdc-datahub.github.io/abcd-publications/`.
+static Next.js site on GitHub Pages at `https://software.nbdc-datahub.org/abcd-publications/`.
 
 ---
 
@@ -61,7 +61,7 @@ static Next.js site on GitHub Pages at `https://nbdc-datahub.github.io/abcd-publ
 | Task | Content | DoD | Depends | Status |
 |------|---------|-----|---------|--------|
 | 5.1 | `.github/workflows/deploy_pages.yml` on `ubuntu-latest`: checkout → Node 20 → `npm ci` (root + web) → `npm run lint` → `npm test` → `npm run prep` → `npm run build --prefix web` with `NEXT_PUBLIC_BASE_PATH=/abcd-publications` → **publish `web/out` to the `gh-pages` branch** via `peaceiris/actions-gh-pages@v4` with `GITHUB_TOKEN`; `concurrency: pages-deploy, cancel-in-progress`; triggers `push: [main]` + `workflow_dispatch` [tdd:skip:ci-config] | Push to `main` produces a green run, the `gh-pages` branch contains the built site incl. `.nojekyll`, and the project-pages URL serves working assets, charts and downloads | Phase 4 | cc:done [06c9423] |
-| 5.2 | One-time repo config: GitHub Pages source = `gh-pages` branch, `/` root; document the click-path in the README so it survives a repo re-create [tdd:skip:repo-settings] | Pages settings point at `gh-pages`; the live URL returns HTTP 200 | 5.1 | blocked |
+| 5.2 | One-time repo config: GitHub Pages source = `gh-pages` branch, `/` root; document the click-path in the README so it survives a repo re-create [tdd:skip:repo-settings] | Pages settings point at `gh-pages`; the live URL returns HTTP 200 | 5.1 | cc:done [06c9423] |
 | 5.3 | Failure-path proof: a deliberately malformed `data/portfolio.csv` on a branch fails the workflow at the `prep` step [tdd:skip:ci-config] | Workflow run fails at `prep` with a message naming the bad column; no publish step executes | 5.1 | blocked |
 | 5.4 | **README — local development section**: prerequisites (Node 20+), `npm ci` (root) + `npm ci --prefix web`, `npm run prep` to generate `web/public/data/`, `npm run dev --prefix web` → `http://localhost:3000`, plus `lint` / `test` / `build` / `format` commands and a note that `prep` must run before `dev` or the app 404s on `index.json` [tdd:skip:docs-only] | A developer with a clean clone reaches a working local site using only the README, in the documented order | 0.4, 1.5 | cc:done [06c9423] |
 | 5.5 | **README — data refresh & deployment section (end of file)**: the §3.4 procedure (overwrite `data/portfolio.csv`, update `data/portfolio.meta.json`, commit, push to `main`), what CI does with it, how to read a failed run, where the site lands (`gh-pages` → project URL), and the two-line custom-domain switch [tdd:skip:docs-only] | A non-developer can publish a new CSV using only the README; the custom-domain note names both files to change | 5.1, 5.4 | cc:done [06c9423] |
@@ -77,20 +77,25 @@ static Next.js site on GitHub Pages at `https://nbdc-datahub.github.io/abcd-publ
 
 ---
 
+## Phase 7: Post-launch UI fixes
+
+Raised after the first deployment (2026-08-11), from viewing the live site.
+
+| Task | Content | DoD | Depends | Status |
+|------|---------|-----|---------|--------|
+| 7.1 | Restore the Plotly mode bar (PNG download, zoom, autoscale). It was removed in 6.3 because its buttons were focusable inside an `aria-hidden` subtree; `.modebar-container` turns out to be a **child** of `.svg-container`, so hide the sibling `svg.main-svg` graphics individually and leave the mode bar exposed and named [tdd:required] | Mode bar visible on both charts with a working PNG download; Lighthouse accessibility stays at 100 with `aria-hidden-focus` passing; every mode-bar button has an accessible name | - | cc:TODO |
+| 7.2 | Widen the page container from `92rem` to `108rem` so 1080p desktops use the available width [tdd:skip:layout-only] | At a 1920px viewport the content spans ~1728px with balanced gutters; the layout is unchanged at ≤1472px | - | cc:TODO |
+| 7.3 | Make the abstract modal opaque — the glass surface let the page behind it show through and made the abstract text hard to read [tdd:skip:css-only] | The dialog paints a fully opaque `--card` background in both themes; no page content is visible through it; backdrop darkened | - | cc:TODO |
+| 7.4 | Point `NEXT_PUBLIC_SITE_URL` and the docs at the canonical origin. The site serves from `software.nbdc-datahub.org/abcd-publications/`; the github.io URL redirects there, so `og:url` currently advertises a redirecting URL [tdd:skip:config-only] | `og:url` on the deployed page equals the canonical origin; README and spec name it | - | cc:TODO |
+
 ## Outstanding
 
-Two tasks are `blocked` on actions outside this workspace, not on code:
-
-- **5.2** — GitHub Pages must be pointed at the `gh-pages` branch by a repo admin
-  (Settings → Pages → Source: *Deploy from a branch* → `gh-pages` / `(root)`). Until then the
-  workflow will go green while the URL 404s. The click-path is in the README.
-- **5.3** — the CI failure-path proof needs a push to run. The local equivalent is verified:
-  renaming a column in `data/portfolio.csv` makes `npm run prep` exit 1 with
-  `column 17 must be "Altmetric.Attention.Score", found "Altmetric.Score"`, and the workflow
-  runs `prep` before `build`, so nothing would be published.
-
-Nothing has been pushed. `5.1`'s workflow is written and its steps are each verified locally,
-but the first green CI run can only be observed after a push.
+- **5.3** — the CI failure-path proof is still unexercised. The happy path is now proven (the
+  first push deployed successfully), but no run has yet been made to fail. The local
+  equivalent is verified: renaming a column in `data/portfolio.csv` makes `npm run prep` exit
+  1 with `column 17 must be "Altmetric.Attention.Score", found "Altmetric.Score"`, and the
+  workflow runs `prep` before `build`, so nothing would be published. Proving it end-to-end
+  needs one throwaway branch with a deliberately broken CSV.
 
 ## Planning record
 

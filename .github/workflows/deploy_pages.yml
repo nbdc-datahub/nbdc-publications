@@ -46,13 +46,14 @@ jobs:
       - name: Prepare published data (schema + size gate)
         run: npm run prep
 
-      # Project Pages live under /abcd-publications, so the base path must be set.
-      # Switching to a custom domain = set this to '' and add web/public/CNAME.
+      # The org serves Pages from software.nbdc-datahub.org and this repo is a project page
+      # under it, so the base path stays /abcd-publications. The nbdc-datahub.github.io URL
+      # redirects there, hence SITE_URL (used for og:url) names the custom origin.
       - name: Build static export
         run: npm run build --prefix web
         env:
           NEXT_PUBLIC_BASE_PATH: /abcd-publications
-          NEXT_PUBLIC_SITE_URL: https://nbdc-datahub.github.io/abcd-publications
+          NEXT_PUBLIC_SITE_URL: https://software.nbdc-datahub.org/abcd-publications
 
       # web/out already contains .nojekyll (from web/public), which Pages needs so the
       # _next/ directory is not stripped by Jekyll.

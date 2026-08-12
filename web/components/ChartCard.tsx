@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import type { Config } from 'plotly.js';
 
 /** Plotly touches `window` at import time, so it can only load in the browser. */
 export const Plot = dynamic(() => import('./PlotlyChart'), {
@@ -17,16 +18,13 @@ export const Plot = dynamic(() => import('./PlotlyChart'), {
   ),
 });
 
-import type { Config } from 'plotly.js';
-
-// The mode bar is off entirely. Its buttons are focusable, and the plot subtree is marked
-// aria-hidden (the text summary below is the accessible version) — a focusable element inside
-// aria-hidden is a keyboard trap for screen-reader users. The charts need no zoom or pan, and
-// the underlying numbers are downloadable as CSV.
+// The mode bar is on: PNG download, zoom and autoscale are genuinely useful here.
+// Selection tools are not — nothing consumes a selected set of bars — so they are dropped.
 export const PLOT_CONFIG: Partial<Config> = {
   displaylogo: false,
   responsive: true,
-  displayModeBar: false,
+  displayModeBar: true,
+  modeBarButtonsToRemove: ['select2d', 'lasso2d'],
 };
 
 export function ChartCard({
@@ -56,7 +54,7 @@ export function ChartCard({
       ) : (
         <>
           <p className="sr-only">{summary}</p>
-          <div aria-hidden>{children}</div>
+          {children}
         </>
       )}
     </section>

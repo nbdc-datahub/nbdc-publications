@@ -31,7 +31,7 @@ that a 1 MB JSON file does not.
 | Item | Value |
 |------|-------|
 | Host | GitHub Pages (project pages) |
-| URL | `https://nbdc-datahub.github.io/abcd-publications/` |
+| URL | `https://software.nbdc-datahub.org/abcd-publications/` |
 | Base path | `NEXT_PUBLIC_BASE_PATH=/abcd-publications` |
 | Runner | `ubuntu-latest` (GitHub-hosted) |
 | Trigger | push to `main`, plus `workflow_dispatch` |
@@ -39,9 +39,14 @@ that a 1 MB JSON file does not.
 
 `web/public/.nojekyll` MUST exist (Next.js emits `_next/` — Jekyll would drop it).
 
-Moving to a custom domain later requires only: add `web/public/CNAME`, set
-`NEXT_PUBLIC_BASE_PATH=''` in the workflow. All internal links MUST go through the
-base-path helper so this stays a two-line change.
+The org already serves Pages from the custom domain `software.nbdc-datahub.org`, and this
+repo is a *project* page beneath it — so the base path stays `/abcd-publications`.
+`https://nbdc-datahub.github.io/abcd-publications/` redirects there, so `NEXT_PUBLIC_SITE_URL`
+(which feeds `og:url`) names the custom origin.
+
+Giving this site a domain of its own would require only: add `web/public/CNAME`, set
+`NEXT_PUBLIC_BASE_PATH=''`. All internal links MUST go through the base-path helper so that
+stays a two-line change.
 
 ---
 

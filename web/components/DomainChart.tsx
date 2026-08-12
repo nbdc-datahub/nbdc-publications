@@ -2,6 +2,7 @@
 
 import { DOMAINS, type PubRow } from '../lib/data';
 import { domainCounts } from '../lib/filter';
+import { hidePlotGraphicsFromAt } from '../lib/plot-a11y';
 import { useChartColors } from '../lib/use-chart-colors';
 import { ChartCard, PLOT_CONFIG, Plot } from './ChartCard';
 
@@ -68,7 +69,8 @@ export function DomainChart({
         ]}
         layout={{
           height: 400,
-          margin: { l: 170, r: 44, t: 8, b: 40 },
+          // t leaves a band for the always-visible mode bar so it never covers a bar.
+          margin: { l: 170, r: 44, t: 34, b: 40 },
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(0,0,0,0)',
           font: { color: colors.foreground, size: 13 },
@@ -85,6 +87,8 @@ export function DomainChart({
         config={PLOT_CONFIG}
         style={{ width: '100%', height: '400px' }}
         useResizeHandler
+        onInitialized={(_figure, graphDiv) => hidePlotGraphicsFromAt(graphDiv)}
+        onUpdate={(_figure, graphDiv) => hidePlotGraphicsFromAt(graphDiv)}
       />
     </ChartCard>
   );

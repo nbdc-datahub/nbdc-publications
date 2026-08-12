@@ -3,7 +3,7 @@
 A static website for browsing, filtering and exporting the catalog of publications that use
 data from the [ABCD Study](https://abcdstudy.org/).
 
-**Live site:** <https://nbdc-datahub.github.io/abcd-publications/>
+**Live site:** <https://software.nbdc-datahub.org/abcd-publications/>
 
 It replaces the R Shiny app formerly at `abcd-study.shinyapps.io/abcd-publications`. There is
 no server: the whole dataset is published as static files and filtered in the browser.
@@ -170,7 +170,7 @@ embedded newlines. Never count records with `wc -l`; parse the file.
 | Item | Value |
 |---|---|
 | Host | GitHub Pages (project pages) |
-| URL | `https://nbdc-datahub.github.io/abcd-publications/` |
+| URL | `https://software.nbdc-datahub.org/abcd-publications/` |
 | Branch | `gh-pages`, published by [`.github/workflows/deploy_pages.yml`](.github/workflows/deploy_pages.yml) |
 | Trigger | Push to `main`, or **Actions → Build & Deploy → Run workflow** |
 | Runner | `ubuntu-latest` |

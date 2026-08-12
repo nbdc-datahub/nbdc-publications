@@ -5,7 +5,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-md">
       <nav
-        className="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-4 py-3"
+        className="mx-auto flex max-w-[108rem] items-center justify-between gap-4 px-4 py-3"
         aria-label="Main"
       >
         <Link href="/" className="focus-ring flex items-center gap-2 font-semibold tracking-tight">

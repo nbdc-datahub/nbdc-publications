@@ -90,7 +90,7 @@ export function PubTable({
         cell: ({ getValue }) => {
           const authors = getValue<string>();
           return (
-            <span className="block max-w-[16rem] truncate" title={authors}>
+            <span className="block max-w-[22rem] truncate" title={authors}>
               {authors}
             </span>
           );
