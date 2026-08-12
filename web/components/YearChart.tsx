@@ -4,7 +4,7 @@ import type { PubRow } from '../lib/data';
 import { yearCounts } from '../lib/filter';
 import { hidePlotGraphicsFromAt } from '../lib/plot-a11y';
 import { useChartColors } from '../lib/use-chart-colors';
-import { ChartCard, PLOT_CONFIG, Plot } from './ChartCard';
+import { ChartCard, MODEBAR_STYLE, PLOT_CONFIG, Plot } from './ChartCard';
 
 export function YearChart({ rows }: { rows: readonly PubRow[] }) {
   const colors = useChartColors();
@@ -46,7 +46,7 @@ export function YearChart({ rows }: { rows: readonly PubRow[] }) {
         layout={{
           height: 400,
           barmode: 'stack',
-          // t leaves a band for the always-visible mode bar so it never covers a bar total.
+          // t leaves a band so the hover mode bar never covers a bar total.
           margin: { l: 56, r: 16, t: 34, b: 44 },
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(0,0,0,0)',
@@ -70,6 +70,7 @@ export function YearChart({ rows }: { rows: readonly PubRow[] }) {
             font: { color: colors.foreground, size: 13 },
           })),
           legend: { orientation: 'h', y: -0.22, x: 0.5, xanchor: 'center' },
+          modebar: MODEBAR_STYLE(colors),
         }}
         config={PLOT_CONFIG}
         style={{ width: '100%', height: '400px' }}

@@ -1,7 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { Config } from 'plotly.js';
+import type { Config, Layout } from 'plotly.js';
+import type { ChartColors } from '../lib/use-chart-colors';
 
 /** Plotly touches `window` at import time, so it can only load in the browser. */
 export const Plot = dynamic(() => import('./PlotlyChart'), {
@@ -18,14 +19,29 @@ export const Plot = dynamic(() => import('./PlotlyChart'), {
   ),
 });
 
-// The mode bar is on: PNG download, zoom and autoscale are genuinely useful here.
-// Selection tools are not — nothing consumes a selected set of bars — so they are dropped.
+// The mode bar appears on hover (Plotly's own default): PNG download, zoom and autoscale are
+// useful, but not worth permanent visual weight on a page whose charts are read at a glance.
+// Selection tools are dropped — nothing consumes a selected set of bars.
+// Charts keep a top margin so the bar, when it appears, never covers a value label.
 export const PLOT_CONFIG: Partial<Config> = {
   displaylogo: false,
   responsive: true,
-  displayModeBar: true,
+  displayModeBar: 'hover',
   modeBarButtonsToRemove: ['select2d', 'lasso2d'],
 };
+
+/**
+ * Mode-bar colours, driven by the theme tokens. Plotly's default icon colour is a hard-coded
+ * dark grey (#444) that all but disappears on the dark card, so both charts set this
+ * explicitly; it re-renders with the palette when the theme changes.
+ */
+export function MODEBAR_STYLE(colors: ChartColors): Partial<Layout>['modebar'] {
+  return {
+    bgcolor: 'rgba(0,0,0,0)',
+    color: colors.muted,
+    activecolor: colors.accent,
+  };
+}
 
 export function ChartCard({
   title,

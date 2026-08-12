@@ -203,6 +203,15 @@ body::before {
   background: linear-gradient(100deg, var(--accent), var(--accent-2));
 }
 
+/* ───────────────────────────── Plotly mode bar ─────────────────────────────
+   The bar is hover-only, which Plotly implements by fading its button groups to opacity 0.
+   Those buttons stay focusable, so a keyboard user would otherwise tab onto an invisible
+   control. Reveal the bar on focus too — keyboard parity with the mouse. */
+.js-plotly-plot .modebar:focus-within > :not(.watermark),
+.js-plotly-plot .modebar:focus-within .modebar-group {
+  opacity: 1 !important;
+}
+
 /* ───────────────────────────── Motion ───────────────────────────── */
 @keyframes fadeUp {
   from {

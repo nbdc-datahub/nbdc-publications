@@ -4,7 +4,7 @@ import { DOMAINS, type PubRow } from '../lib/data';
 import { domainCounts } from '../lib/filter';
 import { hidePlotGraphicsFromAt } from '../lib/plot-a11y';
 import { useChartColors } from '../lib/use-chart-colors';
-import { ChartCard, PLOT_CONFIG, Plot } from './ChartCard';
+import { ChartCard, MODEBAR_STYLE, PLOT_CONFIG, Plot } from './ChartCard';
 
 export function DomainChart({
   rows,
@@ -69,7 +69,7 @@ export function DomainChart({
         ]}
         layout={{
           height: 400,
-          // t leaves a band for the always-visible mode bar so it never covers a bar.
+          // t leaves a band so the hover mode bar never covers a bar or its label.
           margin: { l: 170, r: 44, t: 34, b: 40 },
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(0,0,0,0)',
@@ -83,6 +83,7 @@ export function DomainChart({
           yaxis: { automargin: true, tickfont: { color: colors.foreground } },
           bargap: 0.28,
           showlegend: false,
+          modebar: MODEBAR_STYLE(colors),
         }}
         config={PLOT_CONFIG}
         style={{ width: '100%', height: '400px' }}
