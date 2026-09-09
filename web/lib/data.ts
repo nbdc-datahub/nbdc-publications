@@ -2,6 +2,26 @@
 // Imported by BOTH scripts/prep.ts (writer) and the browser (reader), so the shape can only
 // ever be described once. Keep this module pure — no DOM, no node built-ins.
 
+/**
+ * The NBDC studies, in the order rows are concatenated (spec §1.1, §3.2). Adding a study is
+ * an entry here plus a data/portfolio_<id>.csv — no schema change, because no column name is
+ * study-specific. Declaration order is part of the contract: row index drives shard
+ * assignment, so reordering would reshuffle every abstract shard and void every cached copy.
+ */
+export const STUDIES = [
+  { id: 'abcd', label: 'ABCD', name: 'Adolescent Brain Cognitive Development (ABCD) Study' },
+  { id: 'hbcd', label: 'HBCD', name: 'HEALthy Brain and Child Development (HBCD) Study' },
+] as const;
+
+export type StudyId = (typeof STUDIES)[number]['id'];
+
+export const STUDY_IDS: readonly StudyId[] = STUDIES.map((s) => s.id);
+
+/** Display label for a study id; falls back to the id so unknown data never renders blank. */
+export function studyLabel(id: string): string {
+  return STUDIES.find((s) => s.id === id)?.label ?? id;
+}
+
 /** The 10 research domains, in display order (matches the Shiny app's sorted order). */
 export const DOMAINS = [
   'COVID',
@@ -51,7 +71,7 @@ export const COLUMNS = [
   'Clinical.guidelines.mentions',
   'Bluesky.mentions',
   'Podcast.mentions',
-  'ABCD.member',
+  'Study.member',
   'Domains',
   'COVID',
   'Friends, Family, & Community',
@@ -68,8 +88,15 @@ export const COLUMNS = [
 
 export const ABSTRACT_COLUMN = 'Abstract';
 export const YEAR_COLUMN = 'Pub.Year';
-export const MEMBER_COLUMN = 'ABCD.member';
+export const MEMBER_COLUMN = 'Study.member';
 export const URL_COLUMN = 'URL';
+
+/**
+ * Derived, never sourced: a row's study comes from the file it was read from, so an operator
+ * cannot mislabel it. Prepended to every export (spec §4.4) — 47 columns, not 46.
+ */
+export const STUDY_COLUMN = 'Study';
+export const EXPORT_COLUMNS: readonly string[] = [STUDY_COLUMN, ...COLUMNS];
 
 /** Columns that get their own typed array in the index. */
 const DEDICATED_COLUMNS: readonly string[] = [
@@ -78,7 +105,7 @@ const DEDICATED_COLUMNS: readonly string[] = [
   'Authors',
   'Journal.Name',
   'URL',
-  'ABCD.member',
+  'Study.member',
 ];
 
 const DOMAIN_SET: ReadonlySet<string> = new Set(DOMAINS);
@@ -98,6 +125,8 @@ export const SHARD_COUNT = 32;
 export type Packed = string | number;
 
 export interface IndexCols {
+  /** Index into PubIndex.studies. */
+  study: number[];
   year: number[];
   title: string[];
   authors: string[];
@@ -117,6 +146,8 @@ export interface PubIndex {
   yearMin: number;
   yearMax: number;
   columns: string[];
+  /** Every declared study id, in STUDIES order — including any with zero rows. */
+  studies: string[];
   domains: string[];
   journals: string[];
   shardSize: number;
@@ -126,6 +157,9 @@ export interface PubIndex {
 /** The decoded shape the UI works with. Export-only columns stay in the index. */
 export interface PubRow {
   i: number;
+  study: StudyId;
+  /** `<study>:<URL>` — the selection and export identity (spec §3.5). */
+  key: string;
   year: number;
   title: string;
   authors: string;
@@ -133,6 +167,11 @@ export interface PubRow {
   url: string;
   member: 'yes' | 'no';
   mask: number;
+}
+
+/** The selection and export identity for a row (spec §3.5). */
+export function rowKey(study: string, url: string): string {
+  return `${study}:${url}`;
 }
 
 export function shardSizeFor(rowCount: number): number {
@@ -173,11 +212,18 @@ export function maskFor(record: Record<string, string>): number {
   return mask;
 }
 
-export function encodeIndex(records: Record<string, string>[], lastUpdated: string): PubIndex {
+/** One study's parsed records. Groups are encoded in the order given (spec §3.2). */
+export interface StudyGroup {
+  study: StudyId;
+  records: Record<string, string>[];
+}
+
+export function encodeIndex(groups: readonly StudyGroup[], lastUpdated: string): PubIndex {
   const journals: string[] = [];
   const journalIds = new Map<string, number>();
 
   const cols: IndexCols = {
+    study: [],
     year: [],
     title: [],
     authors: [],
@@ -188,21 +234,29 @@ export function encodeIndex(records: Record<string, string>[], lastUpdated: stri
     extra: {},
   };
 
-  for (const r of records) {
-    const journal = r['Journal.Name'] ?? '';
-    let id = journalIds.get(journal);
-    if (id === undefined) {
-      id = journals.length;
-      journals.push(journal);
-      journalIds.set(journal, id);
+  // Flattened once, in group order, so row index — and therefore shard assignment — is a
+  // pure function of the input order.
+  const records = groups.flatMap((g) => g.records);
+
+  for (const group of groups) {
+    const studyId = STUDY_IDS.indexOf(group.study);
+    for (const r of group.records) {
+      const journal = r['Journal.Name'] ?? '';
+      let id = journalIds.get(journal);
+      if (id === undefined) {
+        id = journals.length;
+        journals.push(journal);
+        journalIds.set(journal, id);
+      }
+      cols.study.push(studyId);
+      cols.year.push(Number(r[YEAR_COLUMN]));
+      cols.title.push(r.Title ?? '');
+      cols.authors.push(r.Authors ?? '');
+      cols.journal.push(id);
+      cols.url.push(r[URL_COLUMN] ?? '');
+      cols.member.push(r[MEMBER_COLUMN] === 'yes' ? 1 : 0);
+      cols.domainMask.push(maskFor(r));
     }
-    cols.year.push(Number(r[YEAR_COLUMN]));
-    cols.title.push(r.Title ?? '');
-    cols.authors.push(r.Authors ?? '');
-    cols.journal.push(id);
-    cols.url.push(r[URL_COLUMN] ?? '');
-    cols.member.push(r[MEMBER_COLUMN] === 'yes' ? 1 : 0);
-    cols.domainMask.push(maskFor(r));
   }
 
   for (const c of EXTRA_COLUMNS) {
@@ -215,6 +269,9 @@ export function encodeIndex(records: Record<string, string>[], lastUpdated: stri
     yearMin: Math.min(...cols.year),
     yearMax: Math.max(...cols.year),
     columns: [...COLUMNS],
+    // Every declared study, not just the ones with rows — an empty study still needs a
+    // filter checkbox and a banner (spec §1.1).
+    studies: [...STUDY_IDS],
     domains: [...DOMAINS],
     journals,
     shardSize: shardSizeFor(records.length),
@@ -226,13 +283,17 @@ export function decodeRows(index: PubIndex): PubRow[] {
   const { cols, journals } = index;
   const rows: PubRow[] = new Array(index.rowCount);
   for (let i = 0; i < index.rowCount; i++) {
+    const study = (index.studies[cols.study[i] as number] ?? STUDY_IDS[0]) as StudyId;
+    const url = cols.url[i] as string;
     rows[i] = {
       i,
+      study,
+      key: rowKey(study, url),
       year: cols.year[i] as number,
       title: cols.title[i] as string,
       authors: cols.authors[i] as string,
       journal: journals[cols.journal[i] as number] as string,
-      url: cols.url[i] as string,
+      url,
       member: cols.member[i] === 1 ? 'yes' : 'no',
       mask: cols.domainMask[i] as number,
     };
@@ -246,7 +307,8 @@ export function domainsFor(mask: number): string[] {
 }
 
 /**
- * Rebuilds full 46-column rows for export, in COLUMNS order.
+ * Rebuilds full 47-column rows for export: the derived `Study` label, then the 46 source
+ * columns in source order (spec §4.4).
  * `abstracts` is indexed by absolute row index; missing entries export as empty.
  */
 export function buildExportRows(
@@ -257,8 +319,10 @@ export function buildExportRows(
   const { cols, journals } = index;
   return rowIndexes.map((i) => {
     const mask = cols.domainMask[i] as number;
-    return COLUMNS.map((c) => {
+    return EXPORT_COLUMNS.map((c) => {
       switch (c) {
+        case STUDY_COLUMN:
+          return studyLabel(index.studies[cols.study[i] as number] ?? '');
         case 'Pub.Year':
           return String(cols.year[i]);
         case 'Title':
@@ -271,7 +335,7 @@ export function buildExportRows(
           return journals[cols.journal[i] as number] as string;
         case 'URL':
           return cols.url[i] as string;
-        case 'ABCD.member':
+        case MEMBER_COLUMN:
           return cols.member[i] === 1 ? 'yes' : 'no';
         default:
           if (DOMAIN_SET.has(c)) {

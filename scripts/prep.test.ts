@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { COLUMNS, DOMAINS, SHARD_COUNT, shardIndexFor } from '../web/lib/data';
+import {
+  COLUMNS,
+  DOMAINS,
+  EXPORT_COLUMNS,
+  SHARD_COUNT,
+  type StudyGroup,
+  shardIndexFor,
+} from '../web/lib/data';
 import { parseCsv } from './csv';
-import { assertSizeBudget, buildArtifacts, SizeBudgetError } from './prep';
+import { assertSizeBudget, buildArtifacts, SizeBudgetError, warnCrossStudyUrls } from './prep';
 
 function records(n: number): Record<string, string>[] {
   return Array.from({ length: n }, (_, i) => {
@@ -14,7 +21,7 @@ function records(n: number): Record<string, string>[] {
     r.Abstract = i % 10 === 0 ? '' : `Abstract ${i}\nwith a newline and "quotes"`;
     r['Journal.Name'] = `Journal ${i % 7}`;
     r.URL = `https://doi.org/10.1/${i}`;
-    r['ABCD.member'] = i % 2 === 0 ? 'yes' : 'no';
+    r['Study.member'] = i % 2 === 0 ? 'yes' : 'no';
     r.MRI = '1';
     r.Domains = 'MRI';
     r['# domains'] = '1';
@@ -22,9 +29,17 @@ function records(n: number): Record<string, string>[] {
   });
 }
 
+/** The common shape: one study with rows, one still awaiting its first publications. */
+function groups(n: number): StudyGroup[] {
+  return [
+    { study: 'abcd', records: records(n) },
+    { study: 'hbcd', records: [] },
+  ];
+}
+
 describe('buildArtifacts', () => {
   const src = records(100);
-  const art = buildArtifacts(src, '2026-07-06');
+  const art = buildArtifacts([{ study: 'abcd', records: src }], '2026-07-06');
 
   it('emits exactly SHARD_COUNT abstract shards', () => {
     expect(art.shards).toHaveLength(SHARD_COUNT);
@@ -47,18 +62,55 @@ describe('buildArtifacts', () => {
 
   it('produces an unfiltered CSV that parses back to the source records', () => {
     const parsed = parseCsv(art.unfilteredCsv);
-    expect(parsed.header).toEqual([...COLUMNS]);
+    expect(parsed.header).toEqual([...EXPORT_COLUMNS]);
     expect(parsed.rows).toHaveLength(src.length);
     for (let r = 0; r < src.length; r++) {
+      expect(parsed.rows[r]?.[0]).toBe('ABCD');
       for (const [c, name] of COLUMNS.entries()) {
-        expect(parsed.rows[r]?.[c]).toBe(src[r]?.[name]);
+        expect(parsed.rows[r]?.[c + 1]).toBe(src[r]?.[name]);
       }
     }
   });
 });
 
+describe('a study with no publications yet (spec §1.1)', () => {
+  const art = buildArtifacts(groups(100), '2026-07-06');
+
+  it('publishes the rows of the studies that do have data', () => {
+    expect(art.index.rowCount).toBe(100);
+    expect(art.index.cols.study.every((s) => s === 0)).toBe(true);
+  });
+
+  it('still lists the empty study, so it gets a filter checkbox and a banner', () => {
+    expect(art.index.studies).toEqual(['abcd', 'hbcd']);
+  });
+
+  it('leaves shard assignment identical to the single-study build', () => {
+    const solo = buildArtifacts([{ study: 'abcd', records: records(100) }], '2026-07-06');
+    expect(art.shards).toEqual(solo.shards);
+    expect(art.index.shardSize).toBe(solo.index.shardSize);
+  });
+});
+
+describe('warnCrossStudyUrls (spec §3.5)', () => {
+  it('says nothing when every URL belongs to one study', () => {
+    expect(warnCrossStudyUrls(groups(10))).toEqual([]);
+  });
+
+  it('names both studies when a paper uses two datasets', () => {
+    const shared = records(1);
+    const warnings = warnCrossStudyUrls([
+      { study: 'abcd', records: records(3) },
+      { study: 'hbcd', records: shared },
+    ]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('abcd and hbcd');
+    expect(warnings[0]).toContain(shared[0]?.URL as string);
+  });
+});
+
 describe('assertSizeBudget', () => {
-  const tiny = buildArtifacts(records(10), '2026-07-06');
+  const tiny = buildArtifacts(groups(10), '2026-07-06');
 
   it('passes when artifacts fit the budget', () => {
     expect(() =>

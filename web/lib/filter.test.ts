@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOMAINS, type PubRow } from './data';
+import { DOMAINS, type PubRow, rowKey } from './data';
 import {
   defaultFilter,
   type FilterState,
@@ -15,12 +15,16 @@ const GEN = bit('Genetics');
 const COVID = bit('COVID');
 
 function row(over: Partial<PubRow> & Pick<PubRow, 'i'>): PubRow {
+  const study = over.study ?? 'abcd';
+  const url = over.url ?? `u${over.i}`;
   return {
+    study,
+    key: rowKey(study, url),
     year: 2020,
     title: `T${over.i}`,
     authors: 'A',
     journal: 'J',
-    url: `u${over.i}`,
+    url,
     member: 'yes',
     mask: 0,
     ...over,

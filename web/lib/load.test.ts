@@ -5,12 +5,17 @@ import { DATA_INDEX_PATH, loadIndex, loadShard, shardPath } from './load';
 const INDEX = encodeIndex(
   [
     {
-      'Pub.Year': '2020',
-      Title: 'T',
-      Authors: 'A',
-      'Journal.Name': 'J',
-      URL: 'u',
-      'ABCD.member': 'yes',
+      study: 'abcd',
+      records: [
+        {
+          'Pub.Year': '2020',
+          Title: 'T',
+          Authors: 'A',
+          'Journal.Name': 'J',
+          URL: 'u',
+          'Study.member': 'yes',
+        },
+      ],
     },
   ],
   '2026-07-06',

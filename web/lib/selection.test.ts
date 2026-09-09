@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { PubRow } from './data';
+import { type PubRow, rowKey } from './data';
 import { selectedRowIndexes, toggleSelection } from './selection';
 
 const rows = [0, 1, 2, 3].map(
   (i) =>
     ({
       i,
+      study: 'abcd',
+      key: rowKey('abcd', `https://doi.org/${i}`),
       year: 2020,
       title: `T${i}`,
       authors: 'A',

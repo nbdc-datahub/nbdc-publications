@@ -14,7 +14,7 @@ function row(over: Record<string, string> = {}): string[] {
     Title: 'T',
     'Journal.Name': 'J',
     URL: 'https://doi.org/10.1/unique',
-    'ABCD.member': 'yes',
+    'Study.member': 'yes',
     MRI: '1',
     ...over,
   };
@@ -22,9 +22,9 @@ function row(over: Record<string, string> = {}): string[] {
 }
 
 /** Builds a CSV, parses it back, and validates — the exact path prep.ts takes. */
-function check(header: string[], rows: string[][]) {
+function check(header: string[], rows: string[][], study = 'abcd') {
   const parsed = parseCsv(toCsv(header, rows));
-  return validateRecords(parsed.header, parsed.rows);
+  return validateRecords(study, parsed.header, parsed.rows);
 }
 
 describe('validateRecords', () => {
@@ -47,8 +47,8 @@ describe('validateRecords', () => {
     expect(() => check(header, [row()])).toThrow(ValidationError);
   });
 
-  it('rejects an ABCD.member value outside {yes,no}, naming the column', () => {
-    expect(() => check([...COLUMNS], [row({ 'ABCD.member': 'Yes' })])).toThrow(/ABCD\.member/);
+  it('rejects a Study.member value outside {yes,no}, naming the column', () => {
+    expect(() => check([...COLUMNS], [row({ 'Study.member': 'Yes' })])).toThrow(/Study\.member/);
   });
 
   it('rejects a non-integer publication year, naming the column', () => {
@@ -59,15 +59,38 @@ describe('validateRecords', () => {
     expect(() => check([...COLUMNS], [row({ MRI: '2' })])).toThrow(/MRI/);
   });
 
-  it('rejects an empty table', () => {
-    expect(() => check([...COLUMNS], [])).toThrow(/no rows/i);
-  });
-
-  it('rejects duplicate URLs, naming the column and the offending value', () => {
+  it('rejects duplicate URLs within one study, naming the column and the value', () => {
     expect(() => check([...COLUMNS], [row(), row()])).toThrow(/URL/);
   });
 
   it('rejects a row with the wrong number of fields', () => {
     expect(() => check([...COLUMNS], [row().slice(0, 45)])).toThrow(ValidationError);
+  });
+
+  it('names the offending study, so a two-study build says which file is wrong', () => {
+    expect(() => check([...COLUMNS], [row({ 'Pub.Year': '20xx' })], 'hbcd')).toThrow(/hbcd/);
+  });
+
+  describe('the empty study (spec §1.1)', () => {
+    it('accepts a header-only file — a study awaiting its first publications', () => {
+      expect(check([...COLUMNS], [], 'hbcd')).toEqual([]);
+    });
+
+    it('still rejects a header-only file whose header is wrong', () => {
+      const header = COLUMNS.filter((c) => c !== 'MRI');
+      expect(() => check(header, [], 'hbcd')).toThrow(/MRI/);
+    });
+  });
+
+  describe('the study-neutral column contract (spec §3.1)', () => {
+    it('rejects a leftover ABCD.member header, pointing at Study.member', () => {
+      const header = COLUMNS.map((c) => (c === 'Study.member' ? 'ABCD.member' : c));
+      expect(() => check(header, [row()])).toThrow(/Study\.member/);
+    });
+
+    it('rejects a study whose domain taxonomy diverges, via the shared header check', () => {
+      const header = COLUMNS.map((c) => (c === 'MRI' ? 'Neuroimaging' : c));
+      expect(() => check(header, [row()], 'hbcd')).toThrow(/MRI/);
+    });
   });
 });

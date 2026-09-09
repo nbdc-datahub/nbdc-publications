@@ -3,7 +3,7 @@
 
 import { withBasePath } from './base-path';
 import { toCsv } from './csv';
-import { buildExportRows, COLUMNS, type PubIndex } from './data';
+import { buildExportRows, EXPORT_COLUMNS, type PubIndex } from './data';
 
 export type ExportKind = 'filtered' | 'unfiltered' | 'search' | 'selected';
 
@@ -29,7 +29,7 @@ export function buildCsv(
   rowIndexes: readonly number[],
   abstracts: readonly (string | undefined)[],
 ): string {
-  return toCsv(COLUMNS, buildExportRows(index, rowIndexes, abstracts));
+  return toCsv(EXPORT_COLUMNS, buildExportRows(index, rowIndexes, abstracts));
 }
 
 /** Hands the browser a generated file. No-op outside a DOM. */
