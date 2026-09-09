@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseCsv } from '../../scripts/csv';
 import { COLUMNS, DOMAINS, EXPORT_COLUMNS, encodeIndex } from './data';
-import { buildCsv, exportFileName, UNFILTERED_PATH } from './export';
+import { buildCsv, documentationPath, exportFileName, UNFILTERED_PATH } from './export';
 
 function record(over: Record<string, string>): Record<string, string> {
   const r: Record<string, string> = {};
@@ -18,18 +18,18 @@ const INDEX = encodeIndex([{ study: 'abcd', records: RECORDS }], '2026-07-06');
 const ABSTRACTS = RECORDS.map((r) => r.Abstract as string);
 
 describe('exportFileName', () => {
-  it('matches the Shiny app’s names, dating exports by day and the full file by snapshot', () => {
+  it('uses the nbdc-pubs prefix, dating exports by day and the full file by snapshot', () => {
     expect(exportFileName('filtered', '2026-08-11', '2026-07-06')).toBe(
-      'abcd-pubs_filtered_2026-08-11.csv',
+      'nbdc-pubs_filtered_2026-08-11.csv',
     );
     expect(exportFileName('search', '2026-08-11', '2026-07-06')).toBe(
-      'abcd-pubs_search_2026-08-11.csv',
+      'nbdc-pubs_search_2026-08-11.csv',
     );
     expect(exportFileName('selected', '2026-08-11', '2026-07-06')).toBe(
-      'abcd-pubs_selected_2026-08-11.csv',
+      'nbdc-pubs_selected_2026-08-11.csv',
     );
     expect(exportFileName('unfiltered', '2026-08-11', '2026-07-06')).toBe(
-      'abcd-pubs_unfiltered_2026-07-06.csv',
+      'nbdc-pubs_unfiltered_2026-07-06.csv',
     );
   });
 });
@@ -37,7 +37,7 @@ describe('exportFileName', () => {
 describe('UNFILTERED_PATH', () => {
   it('points at the prebuilt static file so the full export costs no JS', () => {
     expect(UNFILTERED_PATH('2026-07-06')).toContain(
-      '/downloads/abcd-pubs_unfiltered_2026-07-06.csv',
+      '/downloads/nbdc-pubs_unfiltered_2026-07-06.csv',
     );
   });
 });
@@ -64,5 +64,12 @@ describe('buildCsv', () => {
     const parsed = parseCsv(buildCsv(INDEX, [], ABSTRACTS));
     expect(parsed.header).toEqual([...EXPORT_COLUMNS]);
     expect(parsed.rows).toHaveLength(0);
+  });
+});
+
+describe('documentationPath', () => {
+  it('names the PDF per study, so each study can ship its own', () => {
+    expect(documentationPath('abcd')).toContain('/downloads/abcd_data-document.pdf');
+    expect(documentationPath('hbcd')).toContain('/downloads/hbcd_data-document.pdf');
   });
 });

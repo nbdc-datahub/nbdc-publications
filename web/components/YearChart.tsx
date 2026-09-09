@@ -16,7 +16,7 @@ export function YearChart({ rows }: { rows: readonly PubRow[] }) {
     ? `Publications by year: ${counts
         .map(
           (c) =>
-            `${c.year}, ${c.total} total (${c.yes} with an ABCD member author, ${c.no} without)`,
+            `${c.year}, ${c.total} total (${c.yes} with a study member author, ${c.no} without)`,
         )
         .join('; ')}.`
     : 'No publications match the current filters.';
@@ -40,8 +40,8 @@ export function YearChart({ rows }: { rows: readonly PubRow[] }) {
     <ChartCard title="Publications by Year" summary={summary} empty={counts.length === 0}>
       <Plot
         data={[
-          segment('yes', 'ABCD member author', colors.accent, ''),
-          segment('no', 'No ABCD member author', colors.unselected, '/'),
+          segment('yes', 'Study member author', colors.accent, ''),
+          segment('no', 'No study member author', colors.unselected, '/'),
         ]}
         layout={{
           height: 400,

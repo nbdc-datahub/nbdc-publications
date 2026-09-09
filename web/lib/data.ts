@@ -148,6 +148,8 @@ export interface PubIndex {
   columns: string[];
   /** Every declared study id, in STUDIES order — including any with zero rows. */
   studies: string[];
+  /** Study ids that ship a documentation PDF; the rest simply get no download link. */
+  documentation: string[];
   domains: string[];
   journals: string[];
   shardSize: number;
@@ -218,7 +220,11 @@ export interface StudyGroup {
   records: Record<string, string>[];
 }
 
-export function encodeIndex(groups: readonly StudyGroup[], lastUpdated: string): PubIndex {
+export function encodeIndex(
+  groups: readonly StudyGroup[],
+  lastUpdated: string,
+  documentation: readonly string[] = [],
+): PubIndex {
   const journals: string[] = [];
   const journalIds = new Map<string, number>();
 
@@ -272,6 +278,7 @@ export function encodeIndex(groups: readonly StudyGroup[], lastUpdated: string):
     // Every declared study, not just the ones with rows — an empty study still needs a
     // filter checkbox and a banner (spec §1.1).
     studies: [...STUDY_IDS],
+    documentation: [...documentation],
     domains: [...DOMAINS],
     journals,
     shardSize: shardSizeFor(records.length),

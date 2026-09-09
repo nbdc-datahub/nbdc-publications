@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import type { AbstractStore } from '../lib/abstracts';
-import type { PubIndex, PubRow } from '../lib/data';
+import { type PubIndex, type PubRow, studyLabel } from '../lib/data';
 import {
   buildCsv,
-  DOCUMENTATION_PATH,
+  documentationPath,
   downloadCsv,
   type ExportKind,
   exportFileName,
@@ -117,18 +117,22 @@ export function DownloadPanel({
           Download Unfiltered Data ({index.rowCount.toLocaleString()})
         </a>
 
-        <a
-          href={DOCUMENTATION_PATH}
-          download
-          className="focus-ring btn-ghost rounded-lg px-3 py-2 text-sm"
-        >
-          Download Documentation (PDF)
-        </a>
+        {/* Documentation is per study; a study without a PDF simply gets no link. */}
+        {index.documentation.map((study) => (
+          <a
+            key={study}
+            href={documentationPath(study)}
+            download
+            className="focus-ring btn-ghost rounded-lg px-3 py-2 text-sm"
+          >
+            {studyLabel(study)} Documentation (PDF)
+          </a>
+        ))}
       </div>
 
       <p className="text-xs text-muted">
-        Exports include bibliometrics, Altmetrics and all {index.columns.length} source columns; see
-        the documentation PDF.
+        Exports carry a Study column plus all {index.columns.length} source columns — bibliometrics,
+        Altmetrics and the research domains. See the documentation PDF.
       </p>
 
       {selectedCount > 0 ? (

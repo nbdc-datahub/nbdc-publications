@@ -7,6 +7,7 @@ const study = (over: Partial<StudySummary>): StudySummary => ({
   name: 'Adolescent Brain Cognitive Development (ABCD) Study',
   rowCount: 1848,
   lastUpdated: '2026-07-06',
+  hasDocumentation: true,
   ...over,
 });
 

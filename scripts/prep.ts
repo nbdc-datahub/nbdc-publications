@@ -57,9 +57,13 @@ export interface Artifacts {
   unfilteredCsv: string;
 }
 
-export function buildArtifacts(groups: readonly StudyGroup[], lastUpdated: string): Artifacts {
+export function buildArtifacts(
+  groups: readonly StudyGroup[],
+  lastUpdated: string,
+  documentation: readonly string[] = [],
+): Artifacts {
   const records = groups.flatMap((g) => g.records);
-  const index = encodeIndex(groups, lastUpdated);
+  const index = encodeIndex(groups, lastUpdated, documentation);
   const shardSize = shardSizeFor(records.length);
 
   const shards: string[][] = Array.from({ length: SHARD_COUNT }, () => []);
@@ -118,6 +122,7 @@ export interface StudySummary {
   name: string;
   rowCount: number;
   lastUpdated: string | null;
+  hasDocumentation: boolean;
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -200,7 +205,11 @@ function main(): void {
     throw new Error('no study has a lastUpdated date, but rows were published (spec §3.1).');
   }
 
-  const artifacts = buildArtifacts(groups, lastUpdated);
+  // Discovered before the index is built, so both index.json (read in the browser) and
+  // studies.json (read at build time) can advertise the same set.
+  const docs = STUDIES.filter((study) => existsSync(sourceDoc(study.id))).map((s) => s.id);
+
+  const artifacts = buildArtifacts(groups, lastUpdated, docs);
   const sizes = assertSizeBudget(artifacts);
 
   const summaries: StudySummary[] = STUDIES.map((study, i) => ({
@@ -209,6 +218,7 @@ function main(): void {
     name: study.name,
     rowCount: groups[i]?.records.length ?? 0,
     lastUpdated: dates[study.id],
+    hasDocumentation: docs.includes(study.id),
   }));
 
   // Rewrite from scratch so a removed row can never linger in a stale shard.
@@ -228,11 +238,8 @@ function main(): void {
   );
 
   // A study without a documentation PDF simply gets no download link.
-  const docs: StudyId[] = [];
-  for (const study of STUDIES) {
-    if (!existsSync(sourceDoc(study.id))) continue;
-    copyFileSync(sourceDoc(study.id), join(OUT_DOWNLOADS, publishedDoc(study.id)));
-    docs.push(study.id);
+  for (const study of docs) {
+    copyFileSync(sourceDoc(study), join(OUT_DOWNLOADS, publishedDoc(study)));
   }
 
   console.log(`prep: ${total} records, last updated ${lastUpdated}`);

@@ -125,7 +125,7 @@ export interface YearCount {
   total: number;
 }
 
-/** Per-year counts split by ABCD membership, ascending by year. */
+/** Per-year counts split by study membership, ascending by year. */
 export function yearCounts(rows: readonly PubRow[]): YearCount[] {
   const byYear = new Map<number, YearCount>();
   for (const row of rows) {

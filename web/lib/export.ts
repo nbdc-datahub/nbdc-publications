@@ -1,5 +1,9 @@
-// CSV exports (spec §4.4). Filenames match the Shiny app so existing downstream scripts
-// keep working. CSV only — Excel opens it, and dropping XLSX keeps ~400 KB of JS off the page.
+// CSV exports (spec §4.4). CSV only — Excel opens it, and dropping XLSX keeps ~400 KB of JS
+// off the page.
+//
+// Filenames are `nbdc-pubs_*`. They were `abcd-pubs_*`, matching the Shiny app, until the
+// site broadened past ABCD; the rename is deliberate and does break scripts that hardcoded
+// the old names.
 
 import { withBasePath } from './base-path';
 import { toCsv } from './csv';
@@ -10,7 +14,7 @@ export type ExportKind = 'filtered' | 'unfiltered' | 'search' | 'selected';
 export function exportFileName(kind: ExportKind, today: string, lastUpdated: string): string {
   // The full export is named by the data snapshot; subsets by the day they were taken.
   const stamp = kind === 'unfiltered' ? lastUpdated : today;
-  return `abcd-pubs_${kind}_${stamp}.csv`;
+  return `nbdc-pubs_${kind}_${stamp}.csv`;
 }
 
 /** The prebuilt full export — a plain link, no client-side work and no shard fetches. */
@@ -18,7 +22,10 @@ export function UNFILTERED_PATH(lastUpdated: string): string {
   return withBasePath(`/downloads/${exportFileName('unfiltered', '', lastUpdated)}`);
 }
 
-export const DOCUMENTATION_PATH = withBasePath('/downloads/abcd-pubs_data-document.pdf');
+/** Documentation is per study; prep publishes one only for studies that ship a PDF. */
+export function documentationPath(study: string): string {
+  return withBasePath(`/downloads/${study}_data-document.pdf`);
+}
 
 export function todayStamp(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);

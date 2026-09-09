@@ -13,7 +13,7 @@ export function Header() {
             aria-hidden
             className="inline-block h-5 w-5 rounded-md bg-linear-to-br from-accent to-accent-2 shadow-sm"
           />
-          ABCD<span className="gradient-text">·</span>Publications
+          NBDC<span className="gradient-text">·</span>Publications
         </Link>
 
         <div className="flex items-center gap-4">

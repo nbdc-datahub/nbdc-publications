@@ -14,6 +14,7 @@ export interface StudySummary {
   name: string;
   rowCount: number;
   lastUpdated: string | null;
+  hasDocumentation: boolean;
 }
 
 export function readStudySummaries(): StudySummary[] {
