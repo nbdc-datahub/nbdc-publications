@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import type { PubRow } from '../lib/data';
+import { type PubRow, studyLabel } from '../lib/data';
 import type { Selection } from '../lib/selection';
 
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -48,10 +48,18 @@ export function PubTable({
           <input
             type="checkbox"
             className="focus-ring accent-[var(--accent)]"
-            checked={selection.has(row.original.url)}
-            onChange={() => onToggle(row.original.url)}
+            checked={selection.has(row.original.key)}
+            onChange={() => onToggle(row.original.key)}
             aria-label={`Select ${row.original.title}`}
           />
+        ),
+      },
+      // First DATA column — the select box before it is a control, not data (spec §4.3).
+      {
+        accessorKey: 'study',
+        header: 'Study',
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap font-medium">{studyLabel(row.original.study)}</span>
         ),
       },
       { accessorKey: 'year', header: 'Year' },
@@ -107,7 +115,7 @@ export function PubTable({
     state: { sorting, pagination },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    getRowId: (row) => row.url,
+    getRowId: (row) => row.key,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -194,7 +202,7 @@ export function PubTable({
               <tr
                 key={row.id}
                 className={`border-b border-border last:border-0 ${
-                  selection.has(row.original.url)
+                  selection.has(row.original.key)
                     ? 'bg-[color-mix(in_srgb,var(--accent)_10%,transparent)]'
                     : ''
                 }`}
@@ -202,7 +210,7 @@ export function PubTable({
                 // their own behaviour (spec §4.3).
                 onClick={(e) => {
                   if ((e.target as HTMLElement).closest('a, button, input')) return;
-                  onToggle(row.original.url);
+                  onToggle(row.original.key);
                 }}
               >
                 {row.getVisibleCells().map((cell) => (

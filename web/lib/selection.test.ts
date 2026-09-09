@@ -19,7 +19,7 @@ const rows = [0, 1, 2, 3].map(
 );
 
 describe('toggleSelection', () => {
-  it('adds an unselected url and removes a selected one', () => {
+  it('adds an unselected key and removes a selected one', () => {
     const a = toggleSelection(new Set(), 'x');
     expect([...a]).toEqual(['x']);
     expect([...toggleSelection(a, 'x')]).toEqual([]);
@@ -34,19 +34,43 @@ describe('toggleSelection', () => {
 });
 
 describe('selectedRowIndexes', () => {
-  it('maps selected urls back to row indexes in row order', () => {
-    const sel = new Set(['https://doi.org/2', 'https://doi.org/0']);
+  it('maps selected keys back to row indexes in row order', () => {
+    const sel = new Set([rowKey('abcd', 'https://doi.org/2'), rowKey('abcd', 'https://doi.org/0')]);
     expect(selectedRowIndexes(rows, sel)).toEqual([0, 2]);
   });
 
   it('survives selections whose rows are currently filtered out', () => {
-    // Selection is keyed by URL and lives outside the filtered view, so a url that is not
-    // in the passed-in rows simply contributes nothing rather than throwing.
-    const sel = new Set(['https://doi.org/9']);
+    // Selection lives outside the filtered view, so a key that is not in the passed-in rows
+    // simply contributes nothing rather than throwing.
+    const sel = new Set([rowKey('abcd', 'https://doi.org/9')]);
     expect(selectedRowIndexes(rows, sel)).toEqual([]);
   });
 
   it('returns nothing for an empty selection', () => {
     expect(selectedRowIndexes(rows, new Set())).toEqual([]);
+  });
+});
+
+describe('the composite row identity (spec §3.5)', () => {
+  it('selects one study’s copy of a shared paper without selecting the other', () => {
+    const shared = 'https://doi.org/10.1/shared';
+    const both = [
+      { ...(rows[0] as PubRow), i: 10, study: 'abcd', key: rowKey('abcd', shared), url: shared },
+      { ...(rows[0] as PubRow), i: 11, study: 'hbcd', key: rowKey('hbcd', shared), url: shared },
+    ] satisfies PubRow[];
+
+    const selection = toggleSelection(new Set(), rowKey('hbcd', shared));
+    expect(selectedRowIndexes(both, selection)).toEqual([11]);
+  });
+
+  it('keyed on URL alone, both copies would have been selected — this is the regression', () => {
+    const shared = 'https://doi.org/10.1/shared';
+    const both = [
+      { ...(rows[0] as PubRow), i: 10, study: 'abcd', key: rowKey('abcd', shared), url: shared },
+      { ...(rows[0] as PubRow), i: 11, study: 'hbcd', key: rowKey('hbcd', shared), url: shared },
+    ] satisfies PubRow[];
+
+    expect(both.filter((r) => r.url === shared)).toHaveLength(2);
+    expect(new Set(both.map((r) => r.key)).size).toBe(2);
   });
 });

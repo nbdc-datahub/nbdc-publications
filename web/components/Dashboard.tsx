@@ -90,8 +90,8 @@ export function Dashboard() {
     [loaded],
   );
 
-  const toggle = useCallback((url: string) => {
-    setSelection((current) => toggleSelection(current, url));
+  const toggle = useCallback((key: string) => {
+    setSelection((current) => toggleSelection(current, key));
   }, []);
 
   if (loadError) {
