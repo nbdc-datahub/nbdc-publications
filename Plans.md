@@ -98,6 +98,32 @@ Raised after the first deployment (2026-08-11), from viewing the live site.
   workflow runs `prep` before `build`, so nothing would be published. Proving it end-to-end
   needs one throwaway branch with a deliberately broken CSV.
 
+## Planning record — Phase 9 (multi-study, 2026-09-09)
+
+- `team_validation_mode`: `manual-pass` — sub-agents not used (standing session instruction:
+  do not call the Agent tool unless requested). Product / Architecture / Security / QA /
+  Skeptic were evaluated individually; findings are folded into the DoDs above.
+- Skeptic findings that changed the plan: (a) `URL` stops being unique the moment a paper
+  uses both ABCD and HBCD data — it is the selection and export key, so 9.6 moves row
+  identity to `<study>:<URL>` and 9.3 warns instead of failing; (b) a header-only HBCD file
+  hits the existing `rows.length === 0` hard failure, so 9.3 makes emptiness a per-study
+  allowance with a combined-set floor; (c) if HBCD later ships a different domain taxonomy
+  the shared bitmask silently misaligns, so 9.3 fails the build by name instead.
+- Architecture: prep concatenates studies in `STUDIES` declaration order, because row index
+  drives shard assignment — a non-deterministic merge would reshuffle every abstract shard
+  on each build and blow the browser cache.
+- QA: the repo has no component-test harness (happy-dom is installed, `@testing-library/react`
+  is not), so UI tasks carry `[tdd:skip:no-component-test-harness]` and every decidable rule
+  is pushed into the pure modules (`filter.ts`, `selection.ts`, `data.ts`) where it is tested.
+  Adding RTL is Optional, not Required — it is not a prerequisite for this phase.
+- Security: no new inputs, no secrets, no network surface. Both CSVs are public data committed
+  to the repo; the only credential remains the workflow's built-in `GITHUB_TOKEN`.
+- Lint/formatter baseline: Biome already configured — no setup task needed.
+- Wheel-reinvention check: the study filter reuses the existing domain-bitmask machinery
+  rather than introducing a second filtering idiom; the banner reuses `glass-card` tokens.
+- Deliberately out of scope: renaming the GitHub repo (`abcd-publications`), per-study domain
+  taxonomies, and splitting the charts by study.
+
 ## Planning record
 
 - `team_validation_mode`: `manual-pass` — sub-agents not used (session instruction: do not
@@ -125,3 +151,27 @@ under `software.nbdc-datahub.org/abcd-publications/`.
 | Task | Content | DoD | Depends | Status |
 |------|---------|-----|---------|--------|
 | 8.1 | Serve from `https://pubs.nbdc-datahub.org/`: add `web/public/CNAME`, set `NEXT_PUBLIC_BASE_PATH=''` and `NEXT_PUBLIC_SITE_URL=https://pubs.nbdc-datahub.org` in the deploy workflow, and retarget README + spec at the new origin [tdd:skip:config-only] | `web/out/CNAME` contains the hostname; built HTML references `/_next/...` and `/data/...` with no `/abcd-publications` prefix; `og:url` is the new origin; README and spec name it | - | cc:done [ba79221] |
+
+## Phase 9: Multi-study support (NBDC)
+
+Requested 2026-09-09. The site broadens from one study to the NBDC portfolio: ABCD today,
+HBCD once its data collection finishes. Everything ABCD-specific in the *chrome* becomes
+NBDC; "ABCD" survives only where it genuinely names the ABCD Study.
+
+The governing constraint is that **HBCD ships empty**: `data/portfolio_hbcd.csv` is a
+header-only placeholder, so every task below must behave correctly with a zero-row study.
+
+Contract: [spec.md](spec.md) §3 (per-study inputs) and §4 (study filter, study column,
+banner). Task 9.1 lands that contract before any code depends on it.
+
+| Task | Content | DoD | Depends | Status |
+|------|---------|-----|---------|--------|
+| 9.1 | Rewrite the product contract for multiple studies: spec.md §1 purpose (NBDC portfolio, not ABCD alone), §3.1 per-study source files and the 46-column-per-study / 47-column-export schema, §3.2 `studies[]` + `cols.study[]` in `index.json`, §3.4 the per-study republish workflow, §4.1 study selector, §4.3 Study column, §4.5 the HBCD banner. Record the three data-contract decisions verbatim: source header stays `<STUDY>.member`, export renames it to `Study.member` and prepends `Study`, and row identity becomes `<study>:<URL>` [tdd:skip:docs-only] | spec.md names both source CSVs, states the export column count as 47 with `Study` first, defines `Study.member`, defines `<study>:<URL>` as the selection/export key, and states that an individual study file MAY have zero rows while the combined set MUST NOT | - | cc:TODO |
+| 9.2 | Per-study data model. Add `STUDIES` (`abcd`/`hbcd`, with label + full study name) to `web/lib/data.ts`; `memberColumnFor(study)` → `ABCD.member`/`HBCD.member`; `EXPORT_COLUMNS` = `Study` + the 46 with the member column renamed to `Study.member`. Index gains `studies: string[]` and `cols.study: number[]`. `git mv data/portfolio.csv data/portfolio_abcd.csv`; add header-only `data/portfolio_hbcd.csv`; move `data/portfolio.meta.json` to per-study `{"studies":{"abcd":{"lastUpdated":"2026-07-06"},"hbcd":{"lastUpdated":null}}}`. `scripts/prep.ts` reads every study in `STUDIES` declaration order and concatenates ABCD-then-HBCD so row indexes and shard assignment stay deterministic [tdd:required] | `npm run prep` reports 1,848 ABCD + 0 HBCD rows; `index.json` carries `studies` and a `cols.study` of length 1,848; encode→decode reproduces every source row exactly; `buildExportRows` emits 47 columns with `Study` first and `Study.member` at position 35; `index.json` stays under the 350 KB gzipped budget | 9.1 | cc:TODO |
+| 9.3 | Study-aware validation gate in `scripts/validate.ts`. Each study file is validated against its own member column name; a study file with a header but **zero rows** is valid, while an empty *combined* set still fails; both files MUST declare the identical 10-domain taxonomy (a divergent HBCD taxonomy fails loudly by name rather than silently misaligning the bitmask); `URL` stays unique within a study, and a URL appearing in two studies emits a build **warning** naming both, not a failure — a paper using both datasets is legitimate and `<study>:<URL>` keeps it addressable [tdd:required] | Tests cover: header-only HBCD file passes; all-studies-empty fails; renamed/dropped column fails by name; `HBCD.member` outside `{yes,no}` fails; divergent domain taxonomy fails; cross-study duplicate URL warns and still builds | 9.2 | cc:TODO |
+| 9.4 | Study filter in the engine. `FilterState.studies` as a bitmask over `STUDIES` (mirroring the domain bitmask), defaulting to **all studies selected**; `filterRows` honours it; `defaultFilter`/`isDefaultFilter` account for it so "Clear All Filters" restores both studies; `url-state.ts` round-trips `?studies=abcd,hbcd` and omits the param at the default [tdd:required] | Tests cover: default selects both; deselecting HBCD is a no-op today (0 rows) while deselecting ABCD yields 0 rows; deselecting both yields 0 rows; `toQuery`→`fromQuery` round-trips; an unknown study name in the query is ignored rather than throwing | 9.2 | cc:TODO |
+| 9.5 | Study selector as the **first** control in the filter rail, above Research Domain(s). Checkbox group legend "Study", options "ABCD" and "HBCD", both checked by default, each labelled with its full study name for screen readers. Reuses the existing "nothing can match" hint when both are unchecked [tdd:skip:no-component-test-harness] | The study fieldset is the first child of the rail panel in DOM order, both boxes checked on first load, keyboard-operable with a visible focus ring, and unchecking both shows the hint; Lighthouse accessibility stays at 100 | 9.4 | cc:TODO |
+| 9.6 | Study column as the first **data** column in the table (immediately after the select checkbox, which is a control rather than data), sortable, rendering the study label. Switch row identity from `URL` to `<study>:<URL>` across `selection.ts`, `PubTable` (`getRowId`), `Dashboard` and `DownloadPanel`, so two studies citing the same paper stay separately selectable [tdd:required] | Study is the first column after the select box and sorts; `selection.ts` tests cover the composite key; selecting a row then paginating/searching keeps exactly that row selected; "Download Selected Rows" exports the selected rows and no others | 9.4 | cc:TODO |
+| 9.7 | Small banner directly below the navbar: HBCD data is still under collection, so no HBCD publications are listed yet. Rendered **conditionally on the data** — it appears only while the HBCD study has zero rows, so it disappears on its own when real HBCD data lands rather than needing a code change. Non-sticky, so it scrolls away; informational (not `role="alert"`) [tdd:skip:no-component-test-harness] | The banner renders below the header with today's data and names HBCD; a fixture with a non-zero HBCD row count renders no banner; it does not overlap the sticky header and does not appear in print output | 9.2 | cc:TODO |
+| 9.8 | ABCD → NBDC sweep across chrome, metadata and artifacts. `<h1>` becomes "Publications Using NBDC Data"; header wordmark "NBDC·Publications"; layout `SITE`/`DESC`/`applicationName`/title template; the YearChart member legend loses its ABCD prefix; export filenames `abcd-pubs_*` → `nbdc-pubs_*` (filtered/unfiltered/search/selected); documentation moves to per-study `data/docs/<study>_data-document.pdf`, prep copies only those that exist and the download panel renders one labelled link per available doc. "ABCD" is kept wherever it names the ABCD Study itself [tdd:required] | No user-visible "ABCD" remains except as the name of the ABCD Study; `exportFileName` tests assert the `nbdc-pubs_` prefix; the four download buttons and the ABCD documentation link all resolve to files that exist under `web/out/downloads/`; `og:title` reads "Publications Using NBDC Data" | 9.2 | cc:TODO |
+| 9.9 | Operator and reader docs. README: the republish workflow now names `data/portfolio_abcd.csv` / `data/portfolio_hbcd.csv`, the per-study meta file, the per-study documentation PDFs, and how to add a third study. About page: NBDC portfolio framing, both studies with their full names, HBCD's under-collection status, and the shared domain taxonomy [tdd:skip:docs-only] | README states, in order, the exact steps to publish new data for one study without touching the other, and the steps to add a study; the About page names both studies and no longer implies the catalog is ABCD-only | 9.3, 9.5, 9.6, 9.7, 9.8 | cc:TODO |
