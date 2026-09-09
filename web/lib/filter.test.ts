@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { DOMAINS, type PubRow, rowKey } from './data';
+import { DOMAINS, type PubRow, rowKey, STUDIES } from './data';
 import {
+  ALL_STUDIES,
   defaultFilter,
   type FilterState,
   filterRows,
   isDefaultFilter,
   maskOf,
   searchRows,
+  studyMaskOf,
+  studyNamesOf,
 } from './filter';
 
 const bit = (name: (typeof DOMAINS)[number]) => 1 << DOMAINS.indexOf(name);
@@ -39,6 +42,7 @@ const ROWS: PubRow[] = [
 ];
 
 const BASE: FilterState = {
+  studies: ALL_STUDIES,
   domains: 0,
   matchType: 'any',
   members: { yes: true, no: true },
@@ -166,5 +170,60 @@ describe('defaultFilter / isDefaultFilter', () => {
     expect(isDefaultFilter({ ...defaultFilter(index), domains: MRI }, index)).toBe(false);
     expect(isDefaultFilter({ ...defaultFilter(index), yearMin: 2019 }, index)).toBe(false);
     expect(isDefaultFilter({ ...defaultFilter(index), matchType: 'all' }, index)).toBe(false);
+  });
+});
+
+describe('the study filter (spec §4.1)', () => {
+  const bounds = { yearMin: 2018, yearMax: 2026 };
+  const MIXED: PubRow[] = [
+    row({ i: 0, study: 'abcd', year: 2020 }),
+    row({ i: 1, study: 'abcd', year: 2021 }),
+    row({ i: 2, study: 'hbcd', year: 2022 }),
+  ];
+  const withStudies = (studies: number): FilterState => ({ ...defaultFilter(bounds), studies });
+
+  it('selects every study by default, so nothing is hidden on first load', () => {
+    expect(defaultFilter(bounds).studies).toBe(ALL_STUDIES);
+    expect(studyNamesOf(ALL_STUDIES)).toEqual(['abcd', 'hbcd']);
+    expect(filterRows(MIXED, defaultFilter(bounds))).toHaveLength(3);
+  });
+
+  it('counts an all-studies selection as the default, so Clear All stays disabled', () => {
+    expect(isDefaultFilter(defaultFilter(bounds), bounds)).toBe(true);
+    expect(isDefaultFilter(withStudies(studyMaskOf(['abcd'])), bounds)).toBe(false);
+  });
+
+  it('keeps only the selected studies', () => {
+    expect(filterRows(MIXED, withStudies(studyMaskOf(['abcd']))).map((r) => r.i)).toEqual([0, 1]);
+    expect(filterRows(MIXED, withStudies(studyMaskOf(['hbcd']))).map((r) => r.i)).toEqual([2]);
+  });
+
+  it('matches nothing when every study is deselected', () => {
+    expect(filterRows(MIXED, withStudies(0))).toEqual([]);
+  });
+
+  it('is a no-op today for HBCD, which has no rows yet', () => {
+    const abcdOnly = MIXED.filter((r) => r.study === 'abcd');
+    expect(filterRows(abcdOnly, withStudies(studyMaskOf(['abcd', 'hbcd'])))).toHaveLength(2);
+    expect(filterRows(abcdOnly, withStudies(studyMaskOf(['abcd'])))).toHaveLength(2);
+  });
+
+  it('composes with the other filters rather than replacing them', () => {
+    const filter = { ...withStudies(studyMaskOf(['abcd'])), yearMin: 2021, yearMax: 2026 };
+    expect(filterRows(MIXED, filter).map((r) => r.i)).toEqual([1]);
+  });
+});
+
+describe('studyMaskOf / studyNamesOf', () => {
+  it('round-trips a set of study ids', () => {
+    for (const study of STUDIES) {
+      expect(studyNamesOf(studyMaskOf([study.id]))).toEqual([study.id]);
+    }
+    expect(studyNamesOf(studyMaskOf(['hbcd', 'abcd']))).toEqual(['abcd', 'hbcd']);
+  });
+
+  it('ignores an unknown study id rather than throwing', () => {
+    expect(studyMaskOf(['nope'])).toBe(0);
+    expect(studyMaskOf(['abcd', 'nope'])).toBe(studyMaskOf(['abcd']));
   });
 });

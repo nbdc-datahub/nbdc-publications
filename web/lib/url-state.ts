@@ -1,8 +1,16 @@
 // Shareable filter permalinks (Plans 6.1). Human-readable on purpose — a pasted URL should
-// be legible: ?domains=MRI,Genetics&match=all&years=2020-2024
+// be legible: ?studies=abcd&domains=MRI,Genetics&match=all&years=2020-2024
 
-import { DOMAINS } from './data';
-import { defaultFilter, type FilterState, maskOf, namesOf, type YearBounds } from './filter';
+import { DOMAINS, STUDY_IDS } from './data';
+import {
+  defaultFilter,
+  type FilterState,
+  maskOf,
+  namesOf,
+  studyMaskOf,
+  studyNamesOf,
+  type YearBounds,
+} from './filter';
 
 export interface UiState {
   filter: FilterState;
@@ -10,12 +18,17 @@ export interface UiState {
 }
 
 const DOMAIN_SET: ReadonlySet<string> = new Set(DOMAINS);
+const STUDY_SET: ReadonlySet<string> = new Set(STUDY_IDS);
 
 export function toQuery(state: UiState, bounds: YearBounds): string {
   const d = defaultFilter(bounds);
   const params = new URLSearchParams();
   const { filter, search } = state;
 
+  // "none" rather than an empty value, so a deselect-everything view survives a round-trip.
+  if (filter.studies !== d.studies) {
+    params.set('studies', studyNamesOf(filter.studies).join(',') || 'none');
+  }
   if (filter.domains !== d.domains) params.set('domains', namesOf(filter.domains).join(','));
   if (filter.matchType !== d.matchType) params.set('match', filter.matchType);
   if (filter.members.yes !== d.members.yes || filter.members.no !== d.members.no) {
@@ -44,6 +57,11 @@ function clampYears(raw: string | null, bounds: YearBounds): { yearMin: number; 
 export function fromQuery(query: string, bounds: YearBounds): UiState {
   const params = new URLSearchParams(query);
   const filter = defaultFilter(bounds);
+
+  const studies = params.get('studies');
+  if (studies !== null) {
+    filter.studies = studyMaskOf(studies.split(',').filter((id) => STUDY_SET.has(id)));
+  }
 
   const domains = params.get('domains');
   if (domains !== null) {
