@@ -21,6 +21,19 @@ const INDEX = encodeIndex(
   '2026-07-06',
 );
 
+/**
+ * The payload a returning visitor had cached before the multi-study change: no `studies`,
+ * no `cols.study`. This is what took production down — the guard passed it through and
+ * decodeRows then threw "Cannot read properties of undefined (reading '0')".
+ */
+function staleIndex(): unknown {
+  const stale = structuredClone(INDEX) as unknown as Record<string, unknown>;
+  delete stale.studies;
+  delete (stale.cols as Record<string, unknown>).study;
+  delete stale.documentation;
+  return stale;
+}
+
 function jsonResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
   return {
     ok: init.ok ?? true,
@@ -75,5 +88,59 @@ describe('loadShard', () => {
   it('rejects a shard payload that is not an array of strings', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ 0: 'a' }));
     await expect(loadShard(0, fetchImpl as unknown as typeof fetch)).rejects.toThrow(/00\.json/);
+  });
+});
+
+describe('the writer/reader contract', () => {
+  it('accepts exactly what encodeIndex produces', async () => {
+    // The guard is load-bearing in both directions: too loose and a stale payload reaches
+    // the UI (the outage), too strict and every visitor is locked out of good data.
+    const fetchImpl = vi.fn(async () => jsonResponse(INDEX));
+    await expect(loadIndex(fetchImpl as unknown as typeof fetch)).resolves.toMatchObject({
+      rowCount: INDEX.rowCount,
+      studies: INDEX.studies,
+    });
+  });
+});
+
+describe('a stale cached index (the production outage)', () => {
+  it('is rejected rather than passed to the decoder', async () => {
+    // One shot only: the retry gets the same stale body, so loadIndex must give up loudly.
+    const fetchImpl = vi.fn(async () => jsonResponse(staleIndex()));
+    await expect(loadIndex(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/out of date/i);
+  });
+
+  it('names the reload, so the message tells a user what to do', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse(staleIndex()));
+    await expect(loadIndex(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/reload/i);
+  });
+
+  it('retries once past the HTTP cache and recovers when the server has fresh data', async () => {
+    const fetchImpl = vi.fn(async (_path: string, init?: RequestInit) =>
+      init?.cache === 'reload' ? jsonResponse(INDEX) : jsonResponse(staleIndex()),
+    );
+    const index = await loadIndex(fetchImpl as unknown as typeof fetch);
+    expect(index.rowCount).toBe(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[1]?.[1]).toMatchObject({ cache: 'reload' });
+  });
+
+  it('does not retry when the first response is already valid', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse(INDEX));
+    await loadIndex(fetchImpl as unknown as typeof fetch);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the caching policy (root cause of the outage)', () => {
+  it('never uses force-cache — these files are mutable and live at stable URLs', async () => {
+    const fetchImpl = vi.fn(async (path: string, _init?: RequestInit) =>
+      jsonResponse(path === DATA_INDEX_PATH ? INDEX : ['abstract']),
+    );
+    await loadIndex(fetchImpl as unknown as typeof fetch);
+    await loadShard(0, fetchImpl as unknown as typeof fetch);
+    for (const call of fetchImpl.mock.calls) {
+      expect((call[1] as RequestInit | undefined)?.cache).not.toBe('force-cache');
+    }
   });
 });
