@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { DOMAINS } from '../lib/data';
+import { DOMAINS, STUDIES } from '../lib/data';
 import { type FilterState, namesOf, type YearBounds } from '../lib/filter';
 
 function Fieldset({ legend, children }: { legend: string; children: React.ReactNode }) {
@@ -30,10 +30,12 @@ export function FilterRail({
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const selected = new Set(namesOf(filter.domains));
+  const noStudy = filter.studies === 0;
 
   const set = (patch: Partial<FilterState>) => onChange({ ...filter, ...patch });
 
   const toggleDomain = (bit: number) => set({ domains: filter.domains ^ (1 << bit) });
+  const toggleStudy = (bit: number) => set({ studies: filter.studies ^ (1 << bit) });
 
   const span = Math.max(1, bounds.yearMax - bounds.yearMin);
   const pct = (year: number) => ((year - bounds.yearMin) / span) * 100;
@@ -54,6 +56,32 @@ export function FilterRail({
         id={panelId}
         className={`${open ? 'block' : 'hidden'} glass-card space-y-6 rounded-xl p-5 md:block`}
       >
+        <Fieldset legend="Study">
+          <ul className="space-y-1">
+            {STUDIES.map((study, bit) => (
+              <li key={study.id}>
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="focus-ring accent-[var(--accent)]"
+                    checked={((filter.studies >> bit) & 1) === 1}
+                    onChange={() => toggleStudy(bit)}
+                  />
+                  {/* Label carries the full study name for screen readers; the short label
+                      is what sighted users scan (spec §5). */}
+                  <span aria-hidden>{study.label}</span>
+                  <span className="sr-only">{study.name}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          {noStudy ? (
+            <p className="text-xs text-muted">
+              No study is selected, so nothing can match. Check one to see results.
+            </p>
+          ) : null}
+        </Fieldset>
+
         <Fieldset legend="Research Domain(s)">
           <ul className="space-y-1">
             {DOMAINS.map((domain, bit) => (
@@ -100,7 +128,7 @@ export function FilterRail({
           ))}
         </Fieldset>
 
-        <Fieldset legend="Authors include ABCD member(s)?">
+        <Fieldset legend="Authors include study member(s)?">
           {(['yes', 'no'] as const).map((key) => (
             <label key={key} className="flex cursor-pointer items-center gap-2 text-sm">
               <input
