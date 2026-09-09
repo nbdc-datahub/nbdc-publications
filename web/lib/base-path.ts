@@ -1,6 +1,6 @@
-// Base path for GitHub Project Pages (e.g. "/abcd-publications"). Empty for a custom domain
-// or local dev. Inlined at build from NEXT_PUBLIC_BASE_PATH; MUST equal `basePath` in
-// next.config.ts.
+// Base path for GitHub Project Pages (e.g. "/abcd-publications"). Empty today: the site has
+// its own domain (pubs.nbdc-datahub.org) and serves from the root. Inlined at build from
+// NEXT_PUBLIC_BASE_PATH; MUST equal `basePath` in next.config.ts.
 //
 // Next prefixes <Link>/<Image>/imported assets with basePath automatically, but NOT manual
 // fetch() calls — so client fetches of data/index.json and data/abstracts/NN.json must go

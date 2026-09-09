@@ -46,17 +46,17 @@ jobs:
       - name: Prepare published data (schema + size gate)
         run: npm run prep
 
-      # The org serves Pages from software.nbdc-datahub.org and this repo is a project page
-      # under it, so the base path stays /abcd-publications. The nbdc-datahub.github.io URL
-      # redirects there, hence SITE_URL (used for og:url) names the custom origin.
+      # The site has its own domain (web/public/CNAME -> pubs.nbdc-datahub.org), so it is
+      # served from the root and the base path is empty. SITE_URL feeds og:url.
       - name: Build static export
         run: npm run build --prefix web
         env:
-          NEXT_PUBLIC_BASE_PATH: /abcd-publications
-          NEXT_PUBLIC_SITE_URL: https://software.nbdc-datahub.org/abcd-publications
+          NEXT_PUBLIC_BASE_PATH: ''
+          NEXT_PUBLIC_SITE_URL: https://pubs.nbdc-datahub.org
 
       # web/out already contains .nojekyll (from web/public), which Pages needs so the
-      # _next/ directory is not stripped by Jekyll.
+      # _next/ directory is not stripped by Jekyll, and CNAME, which keeps the custom
+      # domain set on every deploy (the action would otherwise drop it).
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:

@@ -4,7 +4,8 @@ Created: 2026-08-11
 Spec: [spec.md](spec.md) (product contract; precedence `spec.md` > `Plans.md`)
 
 Goal: replace the Shiny app at <https://abcd-study.shinyapps.io/abcd-publications/> with a
-static Next.js site on GitHub Pages at `https://software.nbdc-datahub.org/abcd-publications/`.
+static Next.js site on GitHub Pages at `https://pubs.nbdc-datahub.org/` (Phase 8; it first
+shipped as a project page under `software.nbdc-datahub.org/abcd-publications/`).
 
 ---
 
@@ -115,3 +116,12 @@ Raised after the first deployment (2026-08-11), from viewing the live site.
   and the failure-path proof at 5.2; (c) `URL` is assumed unique and is the selection key —
   if a future export duplicates it, selection and "download selected" silently over-select,
   so 1.1 should also warn on duplicate URLs.
+
+## Phase 8: Move to a dedicated domain
+
+The site gets its own hostname, `pubs.nbdc-datahub.org`, instead of living as a project page
+under `software.nbdc-datahub.org/abcd-publications/`.
+
+| Task | Content | DoD | Depends | Status |
+|------|---------|-----|---------|--------|
+| 8.1 | Serve from `https://pubs.nbdc-datahub.org/`: add `web/public/CNAME`, set `NEXT_PUBLIC_BASE_PATH=''` and `NEXT_PUBLIC_SITE_URL=https://pubs.nbdc-datahub.org` in the deploy workflow, and retarget README + spec at the new origin [tdd:skip:config-only] | `web/out/CNAME` contains the hostname; built HTML references `/_next/...` and `/data/...` with no `/abcd-publications` prefix; `og:url` is the new origin; README and spec name it | - | cc:WIP |

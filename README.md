@@ -3,7 +3,7 @@
 A static website for browsing, filtering and exporting the catalog of publications that use
 data from the [ABCD Study](https://abcdstudy.org/).
 
-**Live site:** <https://software.nbdc-datahub.org/abcd-publications/>
+**Live site:** <https://pubs.nbdc-datahub.org/>
 
 It replaces the R Shiny app formerly at `abcd-study.shinyapps.io/abcd-publications`. There is
 no server: the whole dataset is published as static files and filtered in the browser.
@@ -169,8 +169,8 @@ embedded newlines. Never count records with `wc -l`; parse the file.
 
 | Item | Value |
 |---|---|
-| Host | GitHub Pages (project pages) |
-| URL | `https://software.nbdc-datahub.org/abcd-publications/` |
+| Host | GitHub Pages (project pages, custom domain) |
+| URL | `https://pubs.nbdc-datahub.org/` |
 | Branch | `gh-pages`, published by [`.github/workflows/deploy_pages.yml`](.github/workflows/deploy_pages.yml) |
 | Trigger | Push to `main`, or **Actions → Build & Deploy → Run workflow** |
 | Runner | `ubuntu-latest` |
@@ -185,16 +185,22 @@ The workflow pushes to `gh-pages`, but Pages must be told to serve from it:
 Without this the workflow goes green while the site 404s. It only needs doing once per
 repository, so it is easy to miss after a fork or a re-create.
 
-### Moving to a custom domain
+### The custom domain
 
-Two changes, no code:
+The site serves from its own hostname, so it lives at the root and `NEXT_PUBLIC_BASE_PATH`
+is empty. Two files carry that:
 
-1. Add `web/public/CNAME` containing the hostname (e.g. `publications.abcdstudy.org`).
-2. In [`.github/workflows/deploy_pages.yml`](.github/workflows/deploy_pages.yml), set
-   `NEXT_PUBLIC_BASE_PATH` to `''` and `NEXT_PUBLIC_SITE_URL` to the new origin.
+1. [`web/public/CNAME`](web/public/CNAME) — the hostname. Next copies `public/` verbatim into
+   `web/out/`, so every deploy re-asserts the domain instead of letting the publish step clear it.
+2. [`.github/workflows/deploy_pages.yml`](.github/workflows/deploy_pages.yml) —
+   `NEXT_PUBLIC_BASE_PATH: ''` and `NEXT_PUBLIC_SITE_URL: https://pubs.nbdc-datahub.org`.
 
-Then point a DNS `CNAME` record at `nbdc-datahub.github.io` and set the domain in Pages
-settings. Every internal link goes through a base-path helper, so nothing else needs touching.
+Outside the repo, a DNS `CNAME` record for `pubs` must point at `nbdc-datahub.github.io`, and
+**Settings → Pages → Custom domain** must be set to the hostname with **Enforce HTTPS** ticked.
+
+To move to a *different* hostname, change those two files plus DNS — every internal link goes
+through a base-path helper, so nothing else needs touching. To go back to a project page under
+another domain, delete `web/public/CNAME` and set `NEXT_PUBLIC_BASE_PATH: /abcd-publications`.
 
 ---
 

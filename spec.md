@@ -30,23 +30,27 @@ that a 1 MB JSON file does not.
 
 | Item | Value |
 |------|-------|
-| Host | GitHub Pages (project pages) |
-| URL | `https://software.nbdc-datahub.org/abcd-publications/` |
-| Base path | `NEXT_PUBLIC_BASE_PATH=/abcd-publications` |
+| Host | GitHub Pages (project pages, custom domain) |
+| URL | `https://pubs.nbdc-datahub.org/` |
+| Base path | `NEXT_PUBLIC_BASE_PATH=''` (served from the domain root) |
 | Runner | `ubuntu-latest` (GitHub-hosted) |
 | Trigger | push to `main`, plus `workflow_dispatch` |
 | Publish | `peaceiris/actions-gh-pages@v4` → `gh-pages` branch, `publish_dir: web/out` |
 
 `web/public/.nojekyll` MUST exist (Next.js emits `_next/` — Jekyll would drop it).
 
-The org already serves Pages from the custom domain `software.nbdc-datahub.org`, and this
-repo is a *project* page beneath it — so the base path stays `/abcd-publications`.
-`https://nbdc-datahub.github.io/abcd-publications/` redirects there, so `NEXT_PUBLIC_SITE_URL`
-(which feeds `og:url`) names the custom origin.
+`web/public/CNAME` MUST exist and MUST contain exactly `pubs.nbdc-datahub.org`. It is the only
+record of the custom domain inside the repo; because the publish step replaces the `gh-pages`
+tree wholesale, a deploy without it would clear the domain in Pages settings.
 
-Giving this site a domain of its own would require only: add `web/public/CNAME`, set
-`NEXT_PUBLIC_BASE_PATH=''`. All internal links MUST go through the base-path helper so that
-stays a two-line change.
+The site owns its hostname, so it is served from the root and the base path is empty.
+`NEXT_PUBLIC_SITE_URL` (which feeds `og:url`) names that origin. It previously served as a
+project page at `software.nbdc-datahub.org/abcd-publications/`; GitHub redirects the old path
+to the new domain.
+
+All internal links MUST go through the base-path helper, so changing hostname — or reverting to
+a project page under another domain — stays a change to `web/public/CNAME` plus the two build
+variables.
 
 ---
 
