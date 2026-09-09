@@ -1,6 +1,7 @@
 import { GeistSans } from 'geist/font/sans';
 import type { Metadata, Viewport } from 'next';
 import { Header } from '../components/Header';
+import { StudyBanner } from '../components/StudyBanner';
 import { ThemeProvider } from '../components/ThemeProvider';
 import './globals.css';
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <ThemeProvider>
           <Header />
+          <StudyBanner />
           <main className="mx-auto max-w-[108rem] px-4 py-6 sm:py-10">{children}</main>
         </ThemeProvider>
       </body>
