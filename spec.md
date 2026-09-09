@@ -2,7 +2,7 @@
 
 Status: draft (created 2026-08-11; multi-study since 2026-09-09)
 Owner: nbdc-datahub
-Repo: `nbdc-datahub/abcd-publications` (named before the site broadened to the NBDC portfolio)
+Repo: `nbdc-datahub/nbdc-publications`
 
 This is the product contract: what is *correct*. `Plans.md` is the task ledger.
 Precedence: `spec.md` > sub-spec > `Plans.md`.

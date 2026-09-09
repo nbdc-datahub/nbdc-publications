@@ -121,8 +121,8 @@ Raised after the first deployment (2026-08-11), from viewing the live site.
 - Lint/formatter baseline: Biome already configured — no setup task needed.
 - Wheel-reinvention check: the study filter reuses the existing domain-bitmask machinery
   rather than introducing a second filtering idiom; the banner reuses `glass-card` tokens.
-- Deliberately out of scope: renaming the GitHub repo (`abcd-publications`), per-study domain
-  taxonomies, and splitting the charts by study.
+- Deliberately out of scope: renaming the GitHub repo (`abcd-publications`) — later done in
+  Phase 10 — per-study domain taxonomies, and splitting the charts by study.
 
 ## Planning record
 
@@ -175,3 +175,13 @@ banner). Task 9.1 lands that contract before any code depends on it.
 | 9.7 | Small banner directly below the navbar: HBCD data is still under collection, so no HBCD publications are listed yet. Rendered **conditionally on the data** — it appears only while the HBCD study has zero rows, so it disappears on its own when real HBCD data lands rather than needing a code change. Non-sticky, so it scrolls away; informational (not `role="alert"`) [tdd:skip:no-component-test-harness] | The banner renders below the header with today's data and names HBCD; a fixture with a non-zero HBCD row count renders no banner; it does not overlap the sticky header and does not appear in print output | 9.2 | cc:done [55eb074] |
 | 9.8 | ABCD → NBDC sweep across chrome, metadata and artifacts. `<h1>` becomes "Publications Using NBDC Data"; header wordmark "NBDC·Publications"; layout `SITE`/`DESC`/`applicationName`/title template; the YearChart member legend loses its ABCD prefix; export filenames `abcd-pubs_*` → `nbdc-pubs_*` (filtered/unfiltered/search/selected); documentation moves to per-study `data/docs/<study>_data-document.pdf`, prep copies only those that exist and the download panel renders one labelled link per available doc. "ABCD" is kept wherever it names the ABCD Study itself [tdd:required] | No user-visible "ABCD" remains except as the name of the ABCD Study; `exportFileName` tests assert the `nbdc-pubs_` prefix; the four download buttons and the ABCD documentation link all resolve to files that exist under `web/out/downloads/`; `og:title` reads "Publications Using NBDC Data" | 9.2 | cc:done [cd18e1e] |
 | 9.9 | Operator and reader docs. README: the republish workflow now names `data/portfolio_abcd.csv` / `data/portfolio_hbcd.csv`, the per-study meta file, the per-study documentation PDFs, and how to add a third study. About page: NBDC portfolio framing, both studies with their full names, HBCD's under-collection status, and the shared domain taxonomy [tdd:skip:docs-only] | README states, in order, the exact steps to publish new data for one study without touching the other, and the steps to add a study; the About page names both studies and no longer implies the catalog is ABCD-only | 9.3, 9.5, 9.6, 9.7, 9.8 | cc:done [73c2e4d] |
+
+## Phase 10: Rename the repository
+
+Requested 2026-09-09. Phase 9 left the repo called `abcd-publications` while the product
+became NBDC-wide; this closes that gap. `nbdc-datahub/abcd-publications` →
+`nbdc-datahub/nbdc-publications`, local checkout included.
+
+| Task | Content | DoD | Depends | Status |
+|------|---------|-----|---------|--------|
+| 10.1 | Rename the repo on GitHub and locally, and retire the old name from every place that names *this* repository: npm package names and both lockfiles, the README clone command, the spec `Repo:` line, and the project-page base-path examples. Leave the two names that are **not** this repo alone — the retired Shiny app at `abcd-study.shinyapps.io/abcd-publications` and the historical `software.nbdc-datahub.org/abcd-publications/` path. Also correct the stale README claim that `NEXT_PUBLIC_BASE_PATH=/abcd-publications` reproduces the deployed URL — production has served from the domain root since Phase 8 [tdd:skip:rename-and-docs] | `gh repo view nbdc-datahub/nbdc-publications` resolves; `git remote -v` points at the new name; `npm ci` succeeds against both renamed lockfiles; all five quality gates pass; the deploy runs green under the new name and `pubs.nbdc-datahub.org` still serves with its custom domain intact; no occurrence of `abcd-publications` remains except the two historical URLs; the local directory is `nbdc-publications` | Phase 9 | cc:WIP |

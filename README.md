@@ -52,8 +52,8 @@ issue no network requests at all.
 **Prerequisites:** Node 20 or newer. (R is *not* needed — CSV is the contract.)
 
 ```bash
-git clone git@github.com:nbdc-datahub/abcd-publications.git
-cd abcd-publications
+git clone git@github.com:nbdc-datahub/nbdc-publications.git
+cd nbdc-publications
 
 npm ci                  # root tooling: data pipeline, tests, lint
 npm ci --prefix web     # the Next.js app
@@ -87,8 +87,9 @@ npm run build --prefix web
 npx http-server web/out -p 8080 -c-1
 ```
 
-Set `NEXT_PUBLIC_BASE_PATH=/abcd-publications` before `build` to reproduce the deployed URL
-structure; leave it unset for local previews served from the root.
+Leave `NEXT_PUBLIC_BASE_PATH` unset, as production does — the site serves from the root of
+its own domain (see [Deployment](#deployment)). Setting it to `/nbdc-publications` only
+reproduces the *old* project-page layout.
 
 ### Layout
 
@@ -254,7 +255,7 @@ Outside the repo, a DNS `CNAME` record for `pubs` must point at `nbdc-datahub.gi
 
 To move to a *different* hostname, change those two files plus DNS — every internal link goes
 through a base-path helper, so nothing else needs touching. To go back to a project page under
-another domain, delete `web/public/CNAME` and set `NEXT_PUBLIC_BASE_PATH: /abcd-publications`.
+another domain, delete `web/public/CNAME` and set `NEXT_PUBLIC_BASE_PATH: /nbdc-publications`.
 
 ---
 

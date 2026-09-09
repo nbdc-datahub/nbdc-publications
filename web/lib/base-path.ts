@@ -1,4 +1,4 @@
-// Base path for GitHub Project Pages (e.g. "/abcd-publications"). Empty today: the site has
+// Base path for GitHub Project Pages (e.g. "/nbdc-publications"). Empty today: the site has
 // its own domain (pubs.nbdc-datahub.org) and serves from the root. Inlined at build from
 // NEXT_PUBLIC_BASE_PATH; MUST equal `basePath` in next.config.ts.
 //

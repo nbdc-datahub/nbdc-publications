@@ -1,9 +1,9 @@
 {
-  "name": "abcd-publications-root",
+  "name": "nbdc-publications-root",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Root tooling for abcd-publications: data-prep pipeline, tests, lint. The web app lives in web/.",
+  "description": "Root tooling for nbdc-publications: data-prep pipeline, tests, lint. The web app lives in web/.",
   "scripts": {
     "prep": "tsx scripts/prep.ts",
     "test": "vitest run",
