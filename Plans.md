@@ -124,4 +124,4 @@ under `software.nbdc-datahub.org/abcd-publications/`.
 
 | Task | Content | DoD | Depends | Status |
 |------|---------|-----|---------|--------|
-| 8.1 | Serve from `https://pubs.nbdc-datahub.org/`: add `web/public/CNAME`, set `NEXT_PUBLIC_BASE_PATH=''` and `NEXT_PUBLIC_SITE_URL=https://pubs.nbdc-datahub.org` in the deploy workflow, and retarget README + spec at the new origin [tdd:skip:config-only] | `web/out/CNAME` contains the hostname; built HTML references `/_next/...` and `/data/...` with no `/abcd-publications` prefix; `og:url` is the new origin; README and spec name it | - | cc:WIP |
+| 8.1 | Serve from `https://pubs.nbdc-datahub.org/`: add `web/public/CNAME`, set `NEXT_PUBLIC_BASE_PATH=''` and `NEXT_PUBLIC_SITE_URL=https://pubs.nbdc-datahub.org` in the deploy workflow, and retarget README + spec at the new origin [tdd:skip:config-only] | `web/out/CNAME` contains the hostname; built HTML references `/_next/...` and `/data/...` with no `/abcd-publications` prefix; `og:url` is the new origin; README and spec name it | - | cc:done [ba79221] |
